@@ -10,8 +10,8 @@
 #define PRINTF(...)
 #endif
 
-#ifndef SIZE_OFFSET
-#define SIZE_OFFSET 1
+#ifndef BLOCK_SIZE_OFFSET
+#define BLOCK_SIZE_OFFSET 8
 #endif
 
 #ifndef FRAME_DATA_SIZE

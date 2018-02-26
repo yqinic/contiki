@@ -1,3 +1,5 @@
 #define CHANNEL_OFFSET 26
 
 #define FRAME_DATA_SIZE 80
+
+#define BLOCK_SIZE_OFFSET 8
