@@ -11,6 +11,10 @@
 #define CHANNEL_OFFSET 26
 #endif
 
+#ifndef RSSI_MIN
+#define RSSI_MIN -100
+#endif
+
 #include "net/netstack.h"
 #include "channel-scan.h"
 
@@ -20,7 +24,10 @@ optimal_channel(int channel_rssi[], int num_of_channel, int channel_min)
 	int i, min = 0;
 	for (i = 0; i < num_of_channel; i++)
 	{
-		if (min > channel_rssi[i] && i+channel_min != CHANNEL_OFFSET)
+		int ch_rssi = channel_rssi[i];
+		if (min > ch_rssi
+			&& i+channel_min != CHANNEL_OFFSET
+			&& ch_rssi >= RSSI_MIN)
 			min = channel_rssi[i];
 	}
 
