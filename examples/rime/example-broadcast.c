@@ -1,7 +1,7 @@
 #include "contiki.h"
 #include "net/rime/rime.h"
 #include "random.h"
-
+#include "dev/cc2420/cc2420.h"
 #include "dev/button-sensor.h"
 
 #include "dev/leds.h"
@@ -29,6 +29,8 @@ PROCESS_THREAD(example_broadcast_process, ev, data)
   PROCESS_BEGIN();
 
   broadcast_open(&broadcast, 129, &broadcast_call);
+
+  cc2420_set_channel(11);
 
   while(1) {
 

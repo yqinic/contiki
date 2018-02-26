@@ -28,10 +28,9 @@ optimal_channel(int channel_rssi[], int num_of_channel, int channel_min)
 		if (min > ch_rssi
 			&& i+channel_min != CHANNEL_OFFSET
 			&& ch_rssi >= RSSI_MIN)
-			min = channel_rssi[i];
+			min = ch_rssi;
 	}
 
-	int optimal;
 	for (i = 0; i < num_of_channel; i++)
 	{
 		if (min == channel_rssi[i] && i+channel_min != CHANNEL_OFFSET)
@@ -46,6 +45,7 @@ channel_scan(void)
 {
 	int i;
 
+	// get max and min channel no.
 	int num_of_channel, channel_min, channel_max;
 	if (NETSTACK_RADIO.get_value(RADIO_CONST_CHANNEL_MIN, &channel_min) != RADIO_RESULT_OK)
 		return 0;
@@ -55,18 +55,24 @@ channel_scan(void)
 	num_of_channel = channel_max - channel_min + 1;
 	PRINTF("number of channels: %d\n", num_of_channel);
 
+	// get rssi of each channel
 	int channel_rssi[num_of_channel];
 	for (i = 0; i < num_of_channel; i++)
 	{
 		if (channel_hop(i+channel_min) == 0)
 			return 0;
-		NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &(channel_rssi[i]));
+		do {
+			NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &(channel_rssi[i]));
+		} while (channel_rssi[i] < RSSI_MIN);
+		
 		PRINTF("rssi of channel %d: %d\n", i+channel_min, channel_rssi[i]);
 	}
 
+	// return to offset channel
 	if (channel_hop(CHANNEL_OFFSET) == 0)
 		return 0;
 
+	// return the optimal channel
 	return optimal_channel(channel_rssi, num_of_channel, channel_min);	
 }
 
