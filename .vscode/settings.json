@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "netstack.h": "c"
+        "netstack.h": "c",
+        "bunicast.h": "c",
+        "rime.h": "c",
+        "contiki.h": "c",
+        "unicast.h": "c",
+        "initializer_list": "c"
     }
 }

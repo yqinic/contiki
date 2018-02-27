@@ -65,6 +65,7 @@
 #include "net/rime/runicast.h"
 #include "net/rime/timesynch.h"
 #include "net/rime/trickle.h"
+#include "net/rime/bunicast.h"
 
 #include "net/mac/mac.h"
 /**
