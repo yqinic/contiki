@@ -37,24 +37,24 @@ PROCESS_THREAD(cpms, ev, data)
 	{
 		etimer_set(&et, CLOCK_SECOND * 5);
 
-		// int chn = channel_scan();
+		int chn = channel_scan();
 
-		// printf("channel: %d\n", chn);
+		printf("channel: %d\n", chn);
 
-		char data[500];
-		int i;
-		for(i=0;i<500;i++) {
-			data[i] = i%10 + '0';
-		}
+		// char data[500];
+		// int i;
+		// for(i=0;i<500;i++) {
+		// 	data[i] = i%10 + '0';
+		// }
 
-		data[500] = '\0';
-		printf("%s\n", data);
-		linkaddr_t addr;
+		// data[500] = '\0';
+		// printf("%s\n", data);
+		// linkaddr_t addr;
 
-    	addr.u8[0] = 155;
-    	addr.u8[1] = 150;
+    	// addr.u8[0] = 155;
+    	// addr.u8[1] = 150;
       
-	  	bunicast_send(&buc, &addr, data);
+	  	// bunicast_send(&buc, &addr, data);
 
 		PROCESS_WAIT_UNTIL(etimer_expired(&et));
 	}

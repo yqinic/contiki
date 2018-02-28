@@ -24,7 +24,7 @@ recv_from_unciast(struct unicast_conn *unicast, const linkaddr_t *from)
 {
 	struct bunicast_conn *c = (struct bunicast_conn *)unicast;
 
-	if(c->u->recv) {
+	if (c->u->recv) {
 		c->u->recv(c, from);
 	}
 }
@@ -36,7 +36,7 @@ sent_by_unicast(struct unicast_conn *unicast, int status, int num_tx)
 
 	static int *s;
 
-	if(c->counter == 0) {
+	if (c->counter == 0) {
 		free(s);
 		s = malloc(c->total_num_tx * sizeof(int));
 	}
@@ -45,13 +45,13 @@ sent_by_unicast(struct unicast_conn *unicast, int status, int num_tx)
 	PRINTF("status: %d\n", status);
 
 	if (++c->counter == c->total_num_tx) {
-		if(c->u->sent) {
+		if (c->u->sent) {
 			c->u->sent(c, s);
 		}
 
 #if DEBUG
 		int ds;
-		for(ds = 0; ds < c->total_num_tx; ds++)
+		for (ds = 0; ds < c->total_num_tx; ds++)
 			PRINTF("No. %d packet status: %d\n", ds + 1, s[ds]);
 #endif
 
@@ -95,7 +95,7 @@ bunicast_send(struct bunicast_conn *c, const linkaddr_t *receiver, const char *d
 	char *data_ptr;
 
 	// block transmission
-	for(num_of_tx = 0; num_of_tx < c->total_num_tx; num_of_tx++) {
+	for (num_of_tx = 0; num_of_tx < c->total_num_tx; num_of_tx++) {
 		data_ptr = data + FRAME_DATA_SIZE * num_of_tx;
 		packetbuf_copyfrom(data_ptr, MIN(strlen(data_ptr), FRAME_DATA_SIZE));
 		unicast_send(&c->c, receiver);
