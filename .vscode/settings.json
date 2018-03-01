@@ -5,6 +5,8 @@
         "rime.h": "c",
         "contiki.h": "c",
         "unicast.h": "c",
-        "initializer_list": "c"
+        "initializer_list": "c",
+        "battery-sensor.h": "c",
+        "uip-debug.h": "c"
     }
 }

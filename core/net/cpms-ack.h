@@ -1,6 +1,8 @@
 #ifndef CPMSACK_H_
 #define CPMSACK_H_
 
+#include "contiki-conf.h"
+
 #ifndef BATTERY_VOLUMN_OFFSET
 #define BATTERY_VOLUMN_OFFSET 2400
 #endif
@@ -13,9 +15,13 @@
 #define ANTENNA_ORIENTATION_OFFSET 0
 #endif
 
-#ifndef CPMSACK_ACK
 #define CPMSACK_ACK (0x01)
-#endif
+#define DATA_PRIORITY_BIN 6
+#define DATA_BYTES_OCT 2
+#define BATTERY_VOLTAGE_OCT 2
+#define BATTERY_VOLUMN_OCT 2
+#define ANTENNA_TYPE_OCT 1
+#define ANTENNA_ORIENTATION_OCT 2
 
 struct cpmsack {
     int val;
@@ -46,8 +52,8 @@ int cpmsack_set_attr(int type, const int value);
 
 int cpmsack_get_attr(int type);
 
-int cpmsack_frame_create();
+int cpmsack_frame_create(int num, uint8_t *buf);
 
-int cpmsack_frame_parse();
+int cpmsack_frame_parse(uint8_t *buf);
 
 #endif

@@ -5,6 +5,17 @@
 
 #include <stdio.h>
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') 
+
 PROCESS(cpms, "cpms");
 AUTOSTART_PROCESSES(&cpms);
 
@@ -37,10 +48,12 @@ PROCESS_THREAD(cpms, ev, data)
 	{
 		etimer_set(&et, CLOCK_SECOND * 5);
 
-		int chn = channel_scan();
+		// // channel-scan test
+		// int chn = channel_scan();
 
-		printf("channel: %d\n", chn);
+		// printf("channel: %d\n", chn);
 
+		// // block transmission test 
 		// char data[500];
 		// int i;
 		// for(i=0;i<500;i++) {
@@ -55,6 +68,14 @@ PROCESS_THREAD(cpms, ev, data)
     	// addr.u8[1] = 150;
       
 	  	// bunicast_send(&buc, &addr, data);
+
+		uint8_t buffer[10];
+		cpmsack_frame_create(32, buffer);
+
+		// int i;
+		// for (i=0; i<14; i++) {
+		// 	printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(buffer[i]));
+		// }
 
 		PROCESS_WAIT_UNTIL(etimer_expired(&et));
 	}
