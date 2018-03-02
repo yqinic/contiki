@@ -5,17 +5,6 @@
 
 #include <stdio.h>
 
-#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-#define BYTE_TO_BINARY(byte)  \
-  (byte & 0x80 ? '1' : '0'), \
-  (byte & 0x40 ? '1' : '0'), \
-  (byte & 0x20 ? '1' : '0'), \
-  (byte & 0x10 ? '1' : '0'), \
-  (byte & 0x08 ? '1' : '0'), \
-  (byte & 0x04 ? '1' : '0'), \
-  (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
-
 PROCESS(cpms, "cpms");
 AUTOSTART_PROCESSES(&cpms);
 
@@ -69,8 +58,13 @@ PROCESS_THREAD(cpms, ev, data)
       
 	  	// bunicast_send(&buc, &addr, data);
 
-		uint8_t buffer[10];
-		cpmsack_frame_create(32, buffer);
+		// // cpmsack test
+		// cpmsack_init();
+
+		// uint8_t buffer[11];
+		// cpmsack_frame_create(32, buffer);
+
+		// cpmsack_frame_parse(buffer);
 
 		// int i;
 		// for (i=0; i<14; i++) {

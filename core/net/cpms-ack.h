@@ -23,10 +23,6 @@
 #define ANTENNA_TYPE_OCT 1
 #define ANTENNA_ORIENTATION_OCT 2
 
-struct cpmsack {
-    int val;
-};
-
 enum {
     // how much data to be transferred
 	CPMSACK_DATA_PRIORITY,
@@ -46,7 +42,17 @@ enum {
     CPMSACK_NUM,
 };
 
-extern struct cpmsack cpms_acks[];
+struct cpmsack_list{
+    int priority;
+    int bytes;
+    int voltage;
+    int volumn;
+    int type;
+    int orientation;
+    int camera;
+};
+
+int cpmsack_init();
 
 int cpmsack_set_attr(int type, const int value);
 
@@ -54,6 +60,6 @@ int cpmsack_get_attr(int type);
 
 int cpmsack_frame_create(int num, uint8_t *buf);
 
-int cpmsack_frame_parse(uint8_t *buf);
+int * cpmsack_frame_parse(uint8_t *buf);
 
 #endif

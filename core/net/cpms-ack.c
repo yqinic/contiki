@@ -19,22 +19,32 @@
 #define PRINTF(...)
 #endif
 
-struct cpmsack cpms_acks[CPMSACK_NUM];
+static int cpms_acks[CPMSACK_NUM];
 
 static int 
 cpmsack_update(int num)
 {
-    cpms_acks[CPMSACK_DATA_PRIORITY].val = 1;
-    cpms_acks[CPMSACK_DATA_BYTES].val = num;
+    cpms_acks[CPMSACK_DATA_PRIORITY] = 1;
+    cpms_acks[CPMSACK_DATA_BYTES] = num;
 
     SENSORS_ACTIVATE(battery_sensor);
-    cpms_acks[CPMSACK_BATTERY_VOLTAGE].val = battery_sensor.value(0);
+    cpms_acks[CPMSACK_BATTERY_VOLTAGE] = battery_sensor.value(0);
     SENSORS_DEACTIVATE(battery_sensor);
 
-    // to be modified
-    cpms_acks[CPMSACK_BATTERY_VOLUMN].val = BATTERY_VOLUMN_OFFSET;
-    cpms_acks[CPMSACK_ANTENNA_TYPE].val =  ANTENNA_TYPE_OFFSET;
-    cpms_acks[CPMSACK_ANTENNA_ORIENTATION].val = ANTENNA_ORIENTATION_OFFSET;
+    return 1;
+}
+
+int
+cpmsack_init()
+{
+    cpms_acks[CPMSACK_DATA_PRIORITY] = 0;
+    cpms_acks[CPMSACK_DATA_BYTES] = 0;
+    cpms_acks[CPMSACK_BATTERY_VOLTAGE] = 0;
+    cpms_acks[CPMSACK_CAMERA] = 0;
+
+    cpms_acks[CPMSACK_BATTERY_VOLUMN] = BATTERY_VOLUMN_OFFSET;
+    cpms_acks[CPMSACK_ANTENNA_TYPE] =  ANTENNA_TYPE_OFFSET;
+    cpms_acks[CPMSACK_ANTENNA_ORIENTATION] = ANTENNA_ORIENTATION_OFFSET;
 
     return 1;
 }
@@ -42,14 +52,14 @@ cpmsack_update(int num)
 int 
 cpmsack_set_attr(int type, const int value) 
 {
-    cpms_acks[type].val = value;
+    cpms_acks[type] = value;
     return 1;
 }
 
 int
 cpmsack_get_attr(int type)
 {
-    return cpms_acks[type].val;
+    return cpms_acks[type];
 }
 
 int 
@@ -59,25 +69,27 @@ cpmsack_frame_create(int num, uint8_t *buf)
 
     uint8_t pos = 0;
 
-    buf[pos++] = ((1 & 3) << 6) | (cpms_acks[CPMSACK_DATA_PRIORITY].val & 63);
+    buf[pos++] = ((1 & 3) << 6) | (cpms_acks[CPMSACK_DATA_PRIORITY] & 63);
     
-    buf[pos++] = (cpms_acks[CPMSACK_DATA_BYTES].val >> 8) & 0xff;
-    buf[pos++] = cpms_acks[CPMSACK_DATA_BYTES].val & 0xff;
+    buf[pos++] = (cpms_acks[CPMSACK_DATA_BYTES] >> 8) & 0xff;
+    buf[pos++] = cpms_acks[CPMSACK_DATA_BYTES] & 0xff;
 
-    buf[pos++] = (cpms_acks[CPMSACK_BATTERY_VOLTAGE].val >> 8) & 0xff;
-    buf[pos++] = cpms_acks[CPMSACK_BATTERY_VOLTAGE].val & 0xff;
+    buf[pos++] = (cpms_acks[CPMSACK_BATTERY_VOLTAGE] >> 8) & 0xff;
+    buf[pos++] = cpms_acks[CPMSACK_BATTERY_VOLTAGE] & 0xff;
 
-    buf[pos++] = (cpms_acks[CPMSACK_BATTERY_VOLUMN].val >> 8) & 0xff;
-    buf[pos++] = cpms_acks[CPMSACK_BATTERY_VOLUMN].val & 0xff;
+    buf[pos++] = (cpms_acks[CPMSACK_BATTERY_VOLUMN] >> 8) & 0xff;
+    buf[pos++] = cpms_acks[CPMSACK_BATTERY_VOLUMN] & 0xff;
 
-    buf[pos++] = cpms_acks[CPMSACK_ANTENNA_TYPE].val & 0xff;
+    buf[pos++] = cpms_acks[CPMSACK_ANTENNA_TYPE] & 0xff;
 
-    buf[pos++] = (cpms_acks[CPMSACK_ANTENNA_ORIENTATION].val >> 8) & 0xff;
-    buf[pos++] = cpms_acks[CPMSACK_ANTENNA_ORIENTATION].val & 0xff;
+    buf[pos++] = (cpms_acks[CPMSACK_ANTENNA_ORIENTATION] >> 8) & 0xff;
+    buf[pos++] = cpms_acks[CPMSACK_ANTENNA_ORIENTATION] & 0xff;
+
+    buf[pos++] = cpms_acks[CPMSACK_CAMERA] & 0xff;
 
 #if DEBUG
     int i;
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 11; i++) {
 		PRINTF(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(buf[i]));
 	}
 #endif
@@ -85,8 +97,22 @@ cpmsack_frame_create(int num, uint8_t *buf)
     return (int)pos;
 }
 
-int
+int *
 cpmsack_frame_parse(uint8_t *buf)
 {
-    return 1;
+    struct cpmsack_list *cpmsacklist;
+
+    cpmsacklist->priority = buf[0] & 63;
+    cpmsacklist->bytes = (buf[1] << 8) + buf[2];
+    cpmsacklist->voltage = (buf[3] << 8) + buf[4];
+    cpmsacklist->volumn = (buf[5] << 8) + buf[6];
+    cpmsacklist->type = buf[7];
+    cpmsacklist->orientation = (buf[8] << 8) + buf[9];
+    cpmsacklist->camera = buf[10];
+
+    PRINTF("%d\n%d\n%d\n%d\n%d\n%d\n%d\n", cpmsacklist->priority,
+        cpmsacklist->bytes, cpmsacklist->voltage, cpmsacklist->volumn,
+        cpmsacklist->type, cpmsacklist->orientation, cpmsacklist->camera);
+
+    return cpmsacklist;
 }

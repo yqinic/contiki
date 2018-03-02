@@ -57,6 +57,7 @@
 #include "net/queuebuf.h"
 #include "net/linkaddr.h"
 #include "net/packetbuf.h"
+#include "net/cpms-ack.h"
 #include "net/rime/rimestats.h"
 #include "net/rime/rmh.h"
 #include "net/rime/route-discovery.h"
