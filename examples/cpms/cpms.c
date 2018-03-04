@@ -29,13 +29,13 @@ PROCESS_THREAD(cpms, ev, data)
 {
 	PROCESS_BEGIN();
 
-	bunicast_open(&buc, 137, &b_callbacks);
+	// bunicast_open(&buc, 137, &b_callbacks);
 
-	static struct etimer et;
+	// static struct etimer et;
 
-	while(1)
-	{
-		etimer_set(&et, CLOCK_SECOND * 5);
+	// while(1)
+	// {
+	// 	etimer_set(&et, CLOCK_SECOND * 5);
 
 		// // channel-scan test
 		// int chn = channel_scan();
@@ -70,9 +70,10 @@ PROCESS_THREAD(cpms, ev, data)
 		// for (i=0; i<14; i++) {
 		// 	printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(buffer[i]));
 		// }
+		cpms_sink_init();
 
-		PROCESS_WAIT_UNTIL(etimer_expired(&et));
-	}
+	// 	PROCESS_WAIT_UNTIL(etimer_expired(&et));
+	// }
 
 	PROCESS_END();
 }
