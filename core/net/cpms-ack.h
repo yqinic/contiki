@@ -16,6 +16,7 @@
 #endif
 
 #define CPMSACK_ACK (0x01)
+#define CPMSACK_FRAME_LENGTH 11
 #define DATA_PRIORITY_BIN 6
 #define DATA_BYTES_OCT 2
 #define BATTERY_VOLTAGE_OCT 2
@@ -60,6 +61,6 @@ int cpmsack_get_attr(int type);
 
 int cpmsack_frame_create(int num, uint8_t *buf);
 
-int * cpmsack_frame_parse(uint8_t *buf);
+struct cpmsack_list * cpmsack_frame_parse(uint8_t *buf);
 
 #endif

@@ -11,6 +11,7 @@
 #endif
 
 #define CPMS_ACK_EXPIRE 2
+#define CPMS_REQUEST_EXPIRE 1
 #define CPMS_DATA_EXPIRE 2
 
 #define COMMAND_CHANNEL 26
@@ -37,6 +38,14 @@ recv_bc(struct broadcast_conn *c, const linkaddr_t *from)
 {
     PRINTF("broadcast message received from %d.%d\n",
 	    from->u8[0], from->u8[1]);
+
+    // acknowledgment frame
+    uint8_t buf[CPMSACK_FRAME_LENGTH];
+    int num = 32;
+    cpmsack_frame_create(num, &buf);
+
+    packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
+    unicast_send(&uc, from);
 }
 
 static void
@@ -51,15 +60,38 @@ static const struct broadcast_callbacks broadcast_callbacks = {recv_bc, sent_bc}
 static void
 recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
-    PRINTF("unicast message received from %d.%d\n",
-	    from->u8[0], from->u8[1]);
+    int frame_type = (*(char *)packetbuf_dataptr() >> 6) & 3;
 
-    if (!unicast_ack_collecting) {
-        struct ctimer ct;
-        // ctimer_set(&ct, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request, priority_list);
-        process_post(&sink_process, PROCESS_EVENT_MSG, NULL);
-        unicast_ack_collecting = 1;
+    PRINTF("unicast message received from %d.%d, frame type: %d\n",
+	    from->u8[0], from->u8[1], frame_type);
+
+    if (frame_type == 1) {
+        // acknowledgment frame received
+        if (unicast_ack_collecting == 0) {
+            // when first ack frame received
+            // set expire time
+            // stop broadcasting
+            // initialize priority list
+
+            struct ctimer ct;
+            // ctimer_set(&ct, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request, priority_list);
+            process_post(&sink_process, PROCESS_EVENT_MSG, NULL);
+            unicast_ack_collecting = 1;
+        } else if (unicast_ack_collecting == 1) {
+            // update priority list
+
+        } else {
+            // ack collecting time expires, do nothing
+            ;
+        }
+    } else if (frame_type == 2) {
+        // data request frame received
+        // bunicast data to sink
+    } else {
+        // unrecognized frame, do nothing
+        ;
     }
+    
     
 }
 
@@ -122,8 +154,8 @@ PROCESS_THREAD(sink_process, ev, data)
     static struct ctimer ct;
 
     while(1) {
-
         PRINTF("PROCESS_EVENT_MSG: %d\n", (int)ev);
+
         if(ev == PROCESS_EVENT_MSG) {
             process_exit(&broadcast_process);
             // clock_time_t delay = CLOCK_SECOND * 5;
@@ -147,15 +179,9 @@ PROCESS_THREAD(sensor_process, ev, data)
     static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND);
+        etimer_set(&et, CLOCK_SECOND * 60);
 
-        linkaddr_t addr;
-
-        packetbuf_copyfrom("Hello", 5);
-        addr.u8[0] = 155;
-        addr.u8[1] = 150;
-
-        unicast_send(&uc, &addr);
+        // sensor applications to be put here 
 
         PROCESS_WAIT_UNTIL(etimer_expired(&et));
     }

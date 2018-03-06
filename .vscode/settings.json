@@ -8,6 +8,8 @@
         "initializer_list": "c",
         "battery-sensor.h": "c",
         "uip-debug.h": "c",
-        "packetbuf.h": "c"
+        "packetbuf.h": "c",
+        "stdio.h": "c",
+        "memb.h": "c"
     }
 }

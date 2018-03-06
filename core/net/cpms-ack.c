@@ -89,7 +89,7 @@ cpmsack_frame_create(int num, uint8_t *buf)
 
 #if DEBUG
     int i;
-	for (i = 0; i < 11; i++) {
+	for (i = 0; i < CPMSACK_FRAME_LENGTH; i++) {
 		PRINTF(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(buf[i]));
 	}
 #endif
@@ -97,7 +97,7 @@ cpmsack_frame_create(int num, uint8_t *buf)
     return (int)pos;
 }
 
-int *
+struct cpmsack_list *
 cpmsack_frame_parse(uint8_t *buf)
 {
     struct cpmsack_list *cpmsacklist;
