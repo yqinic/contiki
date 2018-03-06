@@ -10,6 +10,7 @@
         "uip-debug.h": "c",
         "packetbuf.h": "c",
         "stdio.h": "c",
-        "memb.h": "c"
+        "memb.h": "c",
+        "list.h": "c"
     }
 }

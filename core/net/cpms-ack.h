@@ -24,6 +24,10 @@
 #define ANTENNA_TYPE_OCT 1
 #define ANTENNA_ORIENTATION_OCT 2
 
+#ifndef CPMS_PRIORITY_LEVEL_MAX
+#define CPMS_PRIORITY_LEVEL_MAX 3
+#endif
+
 enum {
     // how much data to be transferred
 	CPMSACK_DATA_PRIORITY,
@@ -61,6 +65,6 @@ int cpmsack_get_attr(int type);
 
 int cpmsack_frame_create(int num, uint8_t *buf);
 
-struct cpmsack_list * cpmsack_frame_parse(uint8_t *buf);
+void * cpmsack_frame_parse(uint8_t *buf);
 
 #endif

@@ -79,7 +79,7 @@ bunicast_close(struct bunicast_conn *c)
 }
 
 void
-bunicast_send(struct bunicast_conn *c, const linkaddr_t *receiver, const char *data)
+bunicast_send(struct bunicast_conn *c, const linkaddr_t *receiver, char *data)
 {
 	int num_of_tx;
 	// max data size = FRAME_DATA_SIZE * c->block_size

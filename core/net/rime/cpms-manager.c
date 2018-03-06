@@ -1,6 +1,7 @@
 #include "contiki.h"
 #include "net/rime/rime.h"
 #include "sys/ctimer.h"
+#include <stdlib.h>
 
 #define DEBUG 1
 #if DEBUG
@@ -10,7 +11,7 @@
 #define PRINTF(...)
 #endif
 
-#define CPMS_ACK_EXPIRE 2
+#define CPMS_ACK_EXPIRE 20
 #define CPMS_REQUEST_EXPIRE 1
 #define CPMS_DATA_EXPIRE 2
 
@@ -29,7 +30,8 @@ static int unicast_ack_collecting = 0;
 static void
 unicast_request()
 {
-    ;
+    // unicast_ack_collecting = 2;
+    PRINTF("unicast ack received time expires, data request begins\n");
 }
 
 // broadcast communication
@@ -40,9 +42,10 @@ recv_bc(struct broadcast_conn *c, const linkaddr_t *from)
 	    from->u8[0], from->u8[1]);
 
     // acknowledgment frame
-    uint8_t buf[CPMSACK_FRAME_LENGTH];
+    uint8_t *buf;
+    buf = malloc(CPMSACK_FRAME_LENGTH);
     int num = 32;
-    cpmsack_frame_create(num, &buf);
+    cpmsack_frame_create(num, buf);
 
     packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
     unicast_send(&uc, from);
@@ -67,6 +70,9 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 
     if (frame_type == 1) {
         // acknowledgment frame received
+        struct cpmsack_list *cpmsacklist = cpmsack_frame_parse((uint8_t *)packetbuf_dataptr());
+        int rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
+
         if (unicast_ack_collecting == 0) {
             // when first ack frame received
             // set expire time
@@ -74,15 +80,20 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
             // initialize priority list
 
             struct ctimer ct;
-            // ctimer_set(&ct, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request, priority_list);
+            // ctimer_set(&ct, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request, NULL);
+            cpmsplist_create(rssi, from, cpmsacklist);
             process_post(&sink_process, PROCESS_EVENT_MSG, NULL);
             unicast_ack_collecting = 1;
+            PRINTF("first unicast ack received\n");
+
         } else if (unicast_ack_collecting == 1) {
             // update priority list
+            cpmsplist_create(packetbuf_attr(PACKETBUF_ATTR_RSSI), from, cpmsacklist);
+            PRINTF("keep receiving unicast ack...\n");
 
         } else {
             // ack collecting time expires, do nothing
-            ;
+            PRINTF("nothing here\n");
         }
     } else if (frame_type == 2) {
         // data request frame received
@@ -158,10 +169,11 @@ PROCESS_THREAD(sink_process, ev, data)
 
         if(ev == PROCESS_EVENT_MSG) {
             process_exit(&broadcast_process);
+            PRINTF("broadcast terminated\n");
             // clock_time_t delay = CLOCK_SECOND * 5;
             // ctimer_set(&ct, CPMS_DATA_EXPIRE, broadcast_process_start, &broadcast_process);
         } else {
-            process_start(&broadcast_process, NULL);
+            // process_start(&broadcast_process, NULL);
         }
 
         PROCESS_YIELD();
@@ -179,9 +191,20 @@ PROCESS_THREAD(sensor_process, ev, data)
     static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND * 60);
+        etimer_set(&et, CLOCK_SECOND * 1);
 
         // sensor applications to be put here 
+        uint8_t *buf;
+        buf = malloc(CPMSACK_FRAME_LENGTH);
+        int num = 32;
+        cpmsack_frame_create(num, buf);
+
+        linkaddr_t addr;
+        addr.u8[0] = 155;
+        addr.u8[1] = 150;
+
+        packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
+        unicast_send(&uc, &addr);
 
         PROCESS_WAIT_UNTIL(etimer_expired(&et));
     }

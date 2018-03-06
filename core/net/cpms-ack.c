@@ -1,7 +1,8 @@
 #include "net/cpms-ack.h"
 #include "dev/battery-sensor.h"
+#include <stdlib.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -97,10 +98,11 @@ cpmsack_frame_create(int num, uint8_t *buf)
     return (int)pos;
 }
 
-struct cpmsack_list *
+void *
 cpmsack_frame_parse(uint8_t *buf)
 {
     struct cpmsack_list *cpmsacklist;
+    cpmsacklist = malloc(1);
 
     cpmsacklist->priority = buf[0] & 63;
     cpmsacklist->bytes = (buf[1] << 8) + buf[2];
