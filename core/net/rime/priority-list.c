@@ -1,11 +1,12 @@
 #include "net/rime/priority-list.h"
 #include "lib/memb.h"
+#include <stdlib.h>
 
 #define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
-#define PRINTFUNC(...) cpmslist_print()
+#define PRINTFUNC(...) cpmsplist_print()
 #else 
 #define PRINTF(...)
 #define PRINTFUNC(...)
@@ -20,7 +21,7 @@ LIST(plist);
 
 #if DEBUG
 static void
-cpmslist_print()
+cpmsplist_print()
 {
     struct cpmspriority_list *list_handle = list_head(plist);
     int count = 0;
@@ -37,7 +38,7 @@ cpmslist_print()
 #endif
 
 static int
-update_cpmslist(struct cpmspriority_list *cpmsplist)
+update_cpmsplist(struct cpmspriority_list *cpmsplist)
 {
     struct cpmspriority_list *list_handle = list_head(plist);
 
@@ -95,6 +96,7 @@ update_cpmslist(struct cpmspriority_list *cpmsplist)
 
                 list_push(plist, cpmsplist);
                 PRINTF("push to the beginning\n");
+                PRINTFUNC();
                 return 1;
             } else {
                 // neither highest priority priority, nor lowest rssi
@@ -153,7 +155,7 @@ cpmsplist_create(int rssi, const linkaddr_t *addr, struct cpmsack_list *cpmsackl
         cpmsplist->addr.u8[0], cpmsplist->addr.u8[1]);
     }
     
-    update_cpmslist(cpmsplist);
+    update_cpmsplist(cpmsplist);
 
     return 1;
 }
@@ -171,20 +173,27 @@ cpmsplist_retx_update(struct cpmspriority_list *cpmsplist)
         if (++cpmsplist->cpmsacklist->priority > CPMS_PRIORITY_LEVEL_MAX) {
             return 0;
         }
+    } else if (cpmsplist->re_tx == 3) {
+        return 0;
+    } else {
+        // do nothing here
     }
 
     PRINTF("updated priority: %d, updated re_tx: %d\n", 
         cpmsplist->cpmsacklist->priority, cpmsplist->re_tx);
 
-    return update_cpmslist(cpmsplist);
+    return update_cpmsplist(cpmsplist);
 }
 
 int 
-cpmslist_free()
+cpmsplist_free()
 {
     // free the list and its corresponding memory
-    while (list_head(plist) != NULL) 
-        memb_free(&plist_memb, list_chop(plist));
+    while (list_head(plist) != NULL) {
+        struct cpmspriority_list *cpmsplist = list_chop(plist);
+        free(cpmsplist->cpmsacklist);
+        memb_free(&plist_memb, cpmsplist);
+    }
     
     PRINTF("plist is freed\n");
 

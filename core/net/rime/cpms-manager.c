@@ -11,8 +11,9 @@
 #define PRINTF(...)
 #endif
 
-#define CPMS_ACK_EXPIRE 20
-#define CPMS_REQUEST_EXPIRE 1
+#define CPMS_ACK_EXPIRE 5
+#define CPMS_REQUEST_EXPIRE 5
+#define CPMS_GLOREQ_EXPIRE 30
 #define CPMS_DATA_EXPIRE 2
 
 #define COMMAND_CHANNEL 26
@@ -25,13 +26,93 @@ static struct broadcast_conn bc;
 static struct unicast_conn uc;
 static struct bunicast_conn buc;
 
+static struct ctimer request_timer;
+static struct ctimer globalreq_timer;
+static struct ctimer data_timer;
+static struct ctimer globaldata_timer;
+
 static int unicast_ack_collecting = 0;
+static int bunicast_data_receiving = 0;
+
+static void unicast_request();
 
 static void
+request_expire(void *ptr)
+{
+    PRINTF("data request expire, resend from priority list\n");
+
+    // hop back to command channel
+    // channel_hop(COMMAND_CHANNEL);
+
+    struct cpmspriority_list *cpmsplist = ptr;
+
+    // retransmission + 1
+    cpmsplist_retx_update(cpmsplist);
+
+    unicast_request();
+}
+
+static void 
 unicast_request()
 {
-    // unicast_ack_collecting = 2;
+    // create data request frame
+    uint8_t *buf;
+    buf = malloc(CPMSREQUEST_FRAME_LENGTH);
+    struct cpmspriority_list *cpmsplist = cpmsplist_get();
+
+    if (cpmsplist == NULL) {
+        PRINTF("priority list run out, start broadcast process\n");
+
+        ctimer_stop(&request_timer);
+        ctimer_stop(&globalreq_timer);
+        // process_start(&broadcast_process, NULL);
+
+        return;
+    }
+
+    // channel scan to obtain optimal data channel
+    int data_channel = channel_scan();
+    cpmsrequest_frame_create(data_channel, 0, cpmsplist->cpmsacklist->bytes, buf);
+
+    PRINTF("data channel: %d, send to %d.%d\n", 
+        data_channel, cpmsplist->addr.u8[0], cpmsplist->addr.u8[1]);
+
+    // send data request frame on command channel
+    packetbuf_copyfrom(buf, CPMSREQUEST_FRAME_LENGTH);
+    unicast_send(&uc, &cpmsplist->addr);
+    free(buf);
+
+    // channel hop
+    // channel_hop(data_channel);
+
+    // set expire time
+    ctimer_set(&request_timer, CLOCK_SECOND * CPMS_REQUEST_EXPIRE, request_expire, cpmsplist);
+}
+
+static void
+global_request_expire()
+{
+    PRINTF("global data request expires, back to broadcast\n");
+
+    // channel_hop(COMMAND_CHANNEL);
+    
+    // data request unicast expires, back to broadcast
+    ctimer_stop(&request_timer);
+    cpmsplist_free();
+    // process_start(&broadcast_process, NULL);
+}
+
+static void
+unicast_request_from_ack()
+{
+    // unicast ack received time expires, disable it
+    unicast_ack_collecting = 2;
     PRINTF("unicast ack received time expires, data request begins\n");
+
+    unicast_request();
+
+    // set global unicast request expire time
+    ctimer_set(&globalreq_timer, CLOCK_SECOND * CPMS_GLOREQ_EXPIRE, global_request_expire, NULL);
 }
 
 // broadcast communication
@@ -65,8 +146,8 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
     int frame_type = (*(char *)packetbuf_dataptr() >> 6) & 3;
 
-    PRINTF("unicast message received from %d.%d, frame type: %d\n",
-	    from->u8[0], from->u8[1], frame_type);
+    // PRINTF("unicast message received from %d.%d, frame type: %d\n",
+	    // from->u8[0], from->u8[1], frame_type);
 
     if (frame_type == 1) {
         // acknowledgment frame received
@@ -79,8 +160,8 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
             // stop broadcasting
             // initialize priority list
 
-            struct ctimer ct;
-            // ctimer_set(&ct, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request, NULL);
+            static struct ctimer ack_timer;
+            ctimer_set(&ack_timer, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request_from_ack, NULL);
             cpmsplist_create(rssi, from, cpmsacklist);
             process_post(&sink_process, PROCESS_EVENT_MSG, NULL);
             unicast_ack_collecting = 1;
@@ -93,11 +174,21 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 
         } else {
             // ack collecting time expires, do nothing
-            PRINTF("nothing here\n");
+            PRINTF("ack collecting time expires, nothing here\n");
         }
     } else if (frame_type == 2) {
         // data request frame received
         // bunicast data to sink
+
+        struct cpmsrequest_list *cpmsrequestlist = 
+            cpmsrequest_frame_parse((uint8_t *)packetbuf_dataptr());
+
+        PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist->channel);
+
+        // channel_hop(cpmsrequestlist->channel);
+
+        char *buf = "hello world\n";
+        bunicast_send(&buc, from, buf);
     } else {
         // unrecognized frame, do nothing
         ;
@@ -125,6 +216,12 @@ recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
 {
     PRINTF("bunicast message received from %d.%d\n",
 	    from->u8[0], from->u8[1]);
+
+    if (bunicast_data_receiving == 0) {
+        ctimer_stop(&request_timer);
+        ctimer_stop(&globalreq_timer);
+    }
+    
 }
 
 static void
@@ -168,7 +265,7 @@ PROCESS_THREAD(sink_process, ev, data)
         PRINTF("PROCESS_EVENT_MSG: %d\n", (int)ev);
 
         if(ev == PROCESS_EVENT_MSG) {
-            process_exit(&broadcast_process);
+            // process_exit(&broadcast_process);
             PRINTF("broadcast terminated\n");
             // clock_time_t delay = CLOCK_SECOND * 5;
             // ctimer_set(&ct, CPMS_DATA_EXPIRE, broadcast_process_start, &broadcast_process);
@@ -177,6 +274,7 @@ PROCESS_THREAD(sink_process, ev, data)
         }
 
         PROCESS_YIELD();
+        PROCESS_WAIT_UNTIL(ev == PROCESS_EVENT_MSG);
     }
 
     PROCESS_END();

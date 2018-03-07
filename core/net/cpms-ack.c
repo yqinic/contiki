@@ -25,7 +25,7 @@ static int cpms_acks[CPMSACK_NUM];
 static int 
 cpmsack_update(int num)
 {
-    cpms_acks[CPMSACK_DATA_PRIORITY] = 1;
+    cpms_acks[CPMSACK_DATA_PRIORITY] = 2;
     cpms_acks[CPMSACK_DATA_BYTES] = num;
 
     SENSORS_ACTIVATE(battery_sensor);
