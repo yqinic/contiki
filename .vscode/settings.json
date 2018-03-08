@@ -11,6 +11,7 @@
         "packetbuf.h": "c",
         "stdio.h": "c",
         "memb.h": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "channel-scan.h": "c"
     }
 }

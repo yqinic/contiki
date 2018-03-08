@@ -11,12 +11,12 @@
 #define PRINTF(...)
 #endif
 
-#define CPMS_ACK_EXPIRE 5
+#define CPMS_ACK_EXPIRE 1
 #define CPMS_REQUEST_EXPIRE 5
 #define CPMS_GLOREQ_EXPIRE 30
 #define CPMS_DATA_EXPIRE 2
 
-#define COMMAND_CHANNEL 26
+#define COMMAND_CHANNEL CHANNEL_OFFSET
 
 PROCESS(sink_process, "Sink Process");
 PROCESS(sensor_process, "Sensor Process");
@@ -31,6 +31,7 @@ static struct ctimer globalreq_timer;
 static struct ctimer data_timer;
 static struct ctimer globaldata_timer;
 
+static int data_channel = 11;
 static int unicast_ack_collecting = 0;
 static int bunicast_data_receiving = 0;
 
@@ -42,7 +43,7 @@ request_expire(void *ptr)
     PRINTF("data request expire, resend from priority list\n");
 
     // hop back to command channel
-    // channel_hop(COMMAND_CHANNEL);
+    channel_hop(COMMAND_CHANNEL);
 
     struct cpmspriority_list *cpmsplist = ptr;
 
@@ -65,13 +66,12 @@ unicast_request()
 
         ctimer_stop(&request_timer);
         ctimer_stop(&globalreq_timer);
-        // process_start(&broadcast_process, NULL);
+        unicast_ack_collecting = 0;
+        process_start(&broadcast_process, NULL);
 
         return;
     }
 
-    // channel scan to obtain optimal data channel
-    int data_channel = channel_scan();
     cpmsrequest_frame_create(data_channel, 0, cpmsplist->cpmsacklist->bytes, buf);
 
     PRINTF("data channel: %d, send to %d.%d\n", 
@@ -82,9 +82,6 @@ unicast_request()
     unicast_send(&uc, &cpmsplist->addr);
     free(buf);
 
-    // channel hop
-    // channel_hop(data_channel);
-
     // set expire time
     ctimer_set(&request_timer, CLOCK_SECOND * CPMS_REQUEST_EXPIRE, request_expire, cpmsplist);
 }
@@ -94,12 +91,13 @@ global_request_expire()
 {
     PRINTF("global data request expires, back to broadcast\n");
 
-    // channel_hop(COMMAND_CHANNEL);
+    channel_hop(COMMAND_CHANNEL);
     
     // data request unicast expires, back to broadcast
     ctimer_stop(&request_timer);
     cpmsplist_free();
-    // process_start(&broadcast_process, NULL);
+    unicast_ack_collecting = 0;
+    process_start(&broadcast_process, NULL);
 }
 
 static void
@@ -108,6 +106,9 @@ unicast_request_from_ack()
     // unicast ack received time expires, disable it
     unicast_ack_collecting = 2;
     PRINTF("unicast ack received time expires, data request begins\n");
+
+    // channel scan to obtain optimal data channel
+    data_channel = channel_scan();
 
     unicast_request();
 
@@ -128,6 +129,8 @@ recv_bc(struct broadcast_conn *c, const linkaddr_t *from)
     int num = 32;
     cpmsack_frame_create(num, buf);
 
+    PRINTF("send ack frame\n");
+
     packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
     unicast_send(&uc, from);
 }
@@ -146,8 +149,8 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
     int frame_type = (*(char *)packetbuf_dataptr() >> 6) & 3;
 
-    // PRINTF("unicast message received from %d.%d, frame type: %d\n",
-	    // from->u8[0], from->u8[1], frame_type);
+    PRINTF("unicast message received from %d.%d, frame type: %d, content: %s\n",
+	    from->u8[0], from->u8[1], frame_type, (char *)packetbuf_dataptr());
 
     if (frame_type == 1) {
         // acknowledgment frame received
@@ -183,15 +186,16 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
         struct cpmsrequest_list *cpmsrequestlist = 
             cpmsrequest_frame_parse((uint8_t *)packetbuf_dataptr());
 
-        PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist->channel);
+        if (channel_hop(cpmsrequestlist->channel)) {
+            PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist->channel);
 
-        // channel_hop(cpmsrequestlist->channel);
+            char *buf = "hello world\n";
+            bunicast_send(&buc, from, buf);
+        }
 
-        char *buf = "hello world\n";
-        bunicast_send(&buc, from, buf);
     } else {
         // unrecognized frame, do nothing
-        ;
+        PRINTF("unrecognized frame, do nothing\n");
     }
     
     
@@ -206,6 +210,14 @@ sent_uc(struct unicast_conn *c, int status, int num_tx)
     }
     PRINTF("unicast message sent to %d.%d: status %d num_tx %d\n",
         dest->u8[0], dest->u8[1], status, num_tx);
+
+    linkaddr_t addr;
+    addr.u8[0] = 155;
+    addr.u8[1] = 150;
+    if(linkaddr_cmp(&addr, &linkaddr_node_addr)) {
+        // channel hop
+        channel_hop(data_channel);
+    }
 }
 
 static const struct unicast_callbacks unicast_callbacks = {recv_uc, sent_uc};
@@ -214,8 +226,8 @@ static const struct unicast_callbacks unicast_callbacks = {recv_uc, sent_uc};
 static void
 recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
 {
-    PRINTF("bunicast message received from %d.%d\n",
-	    from->u8[0], from->u8[1]);
+    PRINTF("bunicast message received from %d.%d, msg: %s\n",
+	    from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
 
     if (bunicast_data_receiving == 0) {
         ctimer_stop(&request_timer);
@@ -259,22 +271,25 @@ PROCESS_THREAD(sink_process, ev, data)
 
     com_init();
 
-    static struct ctimer ct;
+    // static struct ctimer ct;
 
     while(1) {
         PRINTF("PROCESS_EVENT_MSG: %d\n", (int)ev);
 
-        if(ev == PROCESS_EVENT_MSG) {
-            // process_exit(&broadcast_process);
+        if (ev == PROCESS_EVENT_MSG) {
+            process_exit(&broadcast_process);
             PRINTF("broadcast terminated\n");
             // clock_time_t delay = CLOCK_SECOND * 5;
             // ctimer_set(&ct, CPMS_DATA_EXPIRE, broadcast_process_start, &broadcast_process);
+        } else if (ev == PROCESS_EVENT_INIT) {
+            process_start(&broadcast_process, NULL);
         } else {
-            // process_start(&broadcast_process, NULL);
+            ;
         }
 
         PROCESS_YIELD();
-        PROCESS_WAIT_UNTIL(ev == PROCESS_EVENT_MSG);
+        PRINTF("process yielded\n");
+        // PROCESS_WAIT_UNTIL(ev == PROCESS_EVENT_MSG);
     }
 
     PROCESS_END();
@@ -289,20 +304,20 @@ PROCESS_THREAD(sensor_process, ev, data)
     static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND * 1);
+        etimer_set(&et, CLOCK_SECOND * 10);
 
         // sensor applications to be put here 
-        uint8_t *buf;
-        buf = malloc(CPMSACK_FRAME_LENGTH);
-        int num = 32;
-        cpmsack_frame_create(num, buf);
+        // uint8_t *buf;
+        // buf = malloc(CPMSACK_FRAME_LENGTH);
+        // int num = 32;
+        // cpmsack_frame_create(num, buf);
 
-        linkaddr_t addr;
-        addr.u8[0] = 155;
-        addr.u8[1] = 150;
+        // linkaddr_t addr;
+        // addr.u8[0] = 155;
+        // addr.u8[1] = 150;
 
-        packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
-        unicast_send(&uc, &addr);
+        // packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
+        // unicast_send(&uc, &addr);
 
         PROCESS_WAIT_UNTIL(etimer_expired(&et));
     }
@@ -333,6 +348,7 @@ PROCESS_THREAD(broadcast_process, ev, data)
 void 
 cpms_sink_init()
 {
+    channel_hop(COMMAND_CHANNEL);
     process_start(&sink_process, NULL);
 }
 
@@ -340,5 +356,6 @@ cpms_sink_init()
 void 
 cpms_sensor_init()
 {
+    channel_hop(COMMAND_CHANNEL);
     process_start(&sensor_process, NULL);
 }

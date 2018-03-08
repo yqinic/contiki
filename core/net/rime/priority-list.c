@@ -141,6 +141,17 @@ update_cpmsplist(struct cpmspriority_list *cpmsplist)
 int
 cpmsplist_create(int rssi, const linkaddr_t *addr, struct cpmsack_list *cpmsacklist)
 {
+    struct cpmspriority_list *list_handle = list_head(plist);
+
+    while (list_handle != NULL) {
+        if (linkaddr_cmp(&list_handle->addr, addr)) {
+            PRINTF("this sensor node is already in the list\n");
+            return 0;
+        }
+
+        list_handle = list_item_next(list_handle);
+    }
+
     struct cpmspriority_list *cpmsplist;
 
     cpmsplist = memb_alloc(&plist_memb);

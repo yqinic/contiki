@@ -9,7 +9,7 @@
 #endif
 
 #ifndef CHANNEL_OFFSET
-#define CHANNEL_OFFSET 26
+#define CHANNEL_OFFSET 20
 #endif
 
 #ifndef RSSI_MIN
