@@ -2,18 +2,18 @@
 #include "net/rime/rime.h"
 #include "sys/ctimer.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 #define DEBUG 1
 #if DEBUG
-#include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
 #else
 #define PRINTF(...)
 #endif
 
 #define CPMS_ACK_EXPIRE 1
-#define CPMS_REQUEST_EXPIRE 5
-#define CPMS_GLOREQ_EXPIRE 30
+#define CPMS_REQUEST_EXPIRE 2
+#define CPMS_GLOREQ_EXPIRE 10
 #define CPMS_DATA_EXPIRE 2
 
 #define COMMAND_CHANNEL CHANNEL_OFFSET
@@ -30,6 +30,8 @@ static struct ctimer request_timer;
 static struct ctimer globalreq_timer;
 static struct ctimer data_timer;
 static struct ctimer globaldata_timer;
+
+struct cpmspriority_list *global_cpmsplist;
 
 static int data_channel = 11;
 static int unicast_ack_collecting = 0;
@@ -82,8 +84,9 @@ unicast_request()
     unicast_send(&uc, &cpmsplist->addr);
     free(buf);
 
-    // set expire time
-    ctimer_set(&request_timer, CLOCK_SECOND * CPMS_REQUEST_EXPIRE, request_expire, cpmsplist);
+    // // set expire time
+    // ctimer_set(&request_timer, CLOCK_SECOND * CPMS_REQUEST_EXPIRE, request_expire, cpmsplist);
+    global_cpmsplist = cpmsplist;
 }
 
 static void
@@ -217,6 +220,9 @@ sent_uc(struct unicast_conn *c, int status, int num_tx)
     if(linkaddr_cmp(&addr, &linkaddr_node_addr)) {
         // channel hop
         channel_hop(data_channel);
+
+        // set expire time
+        ctimer_set(&request_timer, CLOCK_SECOND * CPMS_REQUEST_EXPIRE, request_expire, global_cpmsplist);
     }
 }
 
@@ -226,7 +232,7 @@ static const struct unicast_callbacks unicast_callbacks = {recv_uc, sent_uc};
 static void
 recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
 {
-    PRINTF("bunicast message received from %d.%d, msg: %s\n",
+    printf("bunicast message received from %d.%d, msg: %s\n",
 	    from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
 
     if (bunicast_data_receiving == 0) {
@@ -242,6 +248,8 @@ sent_buc(struct bunicast_conn *c, int *status)
     const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
     PRINTF("bunicast message sent to %d.%d: status %s\n",
         dest->u8[0], dest->u8[1], (char *)status);
+
+    channel_hop(COMMAND_CHANNEL);
 }
 
 static const struct bunicast_callbacks bunicast_callbacks = {recv_buc, sent_buc};
@@ -304,7 +312,7 @@ PROCESS_THREAD(sensor_process, ev, data)
     static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND * 10);
+        etimer_set(&et, CLOCK_SECOND * 40);
 
         // sensor applications to be put here 
         // uint8_t *buf;
@@ -332,7 +340,7 @@ PROCESS_THREAD(broadcast_process, ev, data)
     static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND);
+        etimer_set(&et, CLOCK_SECOND * 5);
 
         packetbuf_copyfrom("hi", 2);
         broadcast_send(&bc);

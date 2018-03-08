@@ -71,8 +71,8 @@ PROCESS_THREAD(cpms, ev, data)
 		// 	printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(buffer[i]));
 		// }
 
-		// cpms_sink_init();
-		cpms_sensor_init();
+		cpms_sink_init();
+		// cpms_sensor_init();
 
 	// 	PROCESS_WAIT_UNTIL(etimer_expired(&et));
 	// }
