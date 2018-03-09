@@ -70,7 +70,6 @@
 #include "net/rime/bunicast.h"
 #include "net/rime/channel-scan.h"
 #include "net/rime/priority-list.h"
-#include "net/rime/cpms-manager.h"
 
 #include "net/mac/mac.h"
 /**
