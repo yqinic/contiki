@@ -16,6 +16,7 @@
 #define CPMS_GLOREQ_EXPIRE 10
 #define CPMS_DATA_EXPIRE 2
 
+#define CHANNEL_OFFSET 20
 #define COMMAND_CHANNEL CHANNEL_OFFSET
 
 PROCESS(sink_process, "Sink Process");

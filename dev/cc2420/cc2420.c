@@ -34,6 +34,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "contiki.h"
 
@@ -686,7 +687,7 @@ static int
 cc2420_transmit(unsigned short payload_len)
 {
   int i, txpower;
-  
+
   GET_LOCK();
 
   txpower = 0;
@@ -742,6 +743,7 @@ cc2420_transmit(unsigned short payload_len)
 	ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
       }
       ENERGEST_ON(ENERGEST_TYPE_TRANSMIT);
+
       /* We wait until transmission has ended so that we get an
 	 accurate measurement of the transmission time.*/
       wait_for_transmission();

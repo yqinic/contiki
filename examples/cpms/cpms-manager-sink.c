@@ -37,11 +37,16 @@ static int data_channel = 11;
 static int unicast_ack_collecting = 0;
 static int bunicast_data_receiving = 0;
 
+#if DEBUG
+static unsigned long time = 0;
+#endif
+
 static void
 request_list_runout()
 {
     PRINTF("priority list run out, start broadcast process\n");
 
+    unicast_ack_collecting = 0;
     ctimer_stop(&request_timer);
     ctimer_stop(&globalreq_timer);
     process_start(&broadcast_process, NULL);
@@ -161,17 +166,20 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
         // stop broadcasting
         // initialize priority list
 
+        unicast_ack_collecting = 1;
+    #if DEBUG
+        time = clock_time();
+    #endif
         static struct ctimer ack_timer;
         ctimer_set(&ack_timer, CLOCK_SECOND * CPMS_ACK_EXPIRE, unicast_request_from_ack, NULL);
         cpmsplist_free();
         cpmsplist_create(rssi, from, cpmsacklist);
         process_post(&sink_process, PROCESS_EVENT_MSG, NULL);
-        unicast_ack_collecting = 1;
         PRINTF("first unicast ack received\n");
 
     } else if (unicast_ack_collecting == 1) {
         // update priority list
-        cpmsplist_create(packetbuf_attr(PACKETBUF_ATTR_RSSI), from, cpmsacklist);
+        cpmsplist_create(rssi, from, cpmsacklist);
         PRINTF("keep receiving unicast ack...\n");
 
     } else {
@@ -210,7 +218,13 @@ recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
     printf("bunicast message received from %d.%d, msg: %s\n",
 	    from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
 
-    unicast_ack_collecting = 3;
+    unicast_ack_collecting = 0;
+
+#if DEBUG
+    time = clock_time() - time;
+    double t = (double)time/CLOCK_SECOND;
+    PRINTF("time used: %d.%d\n", (int)t, (int)(100*(t-(int)t)));
+#endif
 
     if (bunicast_data_receiving == 0) {
         ctimer_stop(&request_timer);
@@ -262,7 +276,7 @@ PROCESS_THREAD(sink_process, ev, data)
 
         if (ev == PROCESS_EVENT_MSG) {
             process_exit(&broadcast_process);
-            unicast_ack_collecting = 0;
+            // unicast_ack_collecting = 0;
             PRINTF("broadcast terminated\n");
             // clock_time_t delay = CLOCK_SECOND * 5;
             // ctimer_set(&ct, CPMS_DATA_EXPIRE, broadcast_process_start, &broadcast_process);

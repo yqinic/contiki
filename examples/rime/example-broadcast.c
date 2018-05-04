@@ -34,7 +34,11 @@ PROCESS_THREAD(example_broadcast_process, ev, data)
 
   PROCESS_BEGIN();
 
-  broadcast_open(&broadcast, 129, &broadcast_call);
+  // broadcast_open(&broadcast, 129, &broadcast_call);
+
+  unsigned long time_listen;
+  energest_init();
+  unsigned long time_transmit;
 
   while(1) {
 
@@ -44,9 +48,17 @@ PROCESS_THREAD(example_broadcast_process, ev, data)
     etimer_set(&et, CLOCK_SECOND);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    packetbuf_copyfrom("Hello", 6);
-    broadcast_send(&broadcast);
+    // packetbuf_copyfrom("Hello", 6);
+    // broadcast_send(&broadcast);
     printf("broadcast message sent\n");
+
+    time_listen = energest_type_time(ENERGEST_TYPE_LISTEN);
+    time_transmit = energest_type_time(ENERGEST_TYPE_TRANSMIT);
+
+    printf("listen time = %lu, transmit time: %lu\n", time_listen, time_transmit);
+
+    // broadcast_close(&broadcast);
+
   }
 
   PROCESS_END();

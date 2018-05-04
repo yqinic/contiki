@@ -12,6 +12,9 @@
         "stdio.h": "c",
         "memb.h": "c",
         "list.h": "c",
-        "channel-scan.h": "c"
+        "channel-scan.h": "c",
+        "rtimer.h": "c",
+        "energest.h": "c",
+        "type_traits": "c"
     }
 }

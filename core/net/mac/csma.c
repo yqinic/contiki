@@ -83,14 +83,14 @@
 #ifdef CSMA_CONF_MAX_BACKOFF
 #define CSMA_MAX_BACKOFF CSMA_CONF_MAX_BACKOFF
 #else
-#define CSMA_MAX_BACKOFF 5
+#define CSMA_MAX_BACKOFF 4
 #endif
 
 /* macMaxFrameRetries: Maximum number of re-transmissions attampts. Range 0--7 */
 #ifdef CSMA_CONF_MAX_FRAME_RETRIES
 #define CSMA_MAX_MAX_FRAME_RETRIES CSMA_CONF_MAX_FRAME_RETRIES
 #else
-#define CSMA_MAX_MAX_FRAME_RETRIES 7
+#define CSMA_MAX_MAX_FRAME_RETRIES 2
 #endif
 
 /* Packet metadata */
