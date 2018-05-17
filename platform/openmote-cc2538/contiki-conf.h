@@ -532,7 +532,7 @@ typedef uint32_t rtimer_clock_t;
 #define RIME_CONF_NO_POLITE_ANNOUCEMENTS     0
 
 #ifndef QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM                    8
+#define QUEUEBUF_CONF_NUM                    16
 #endif
 
 #endif /* NETSTACK_CONF_WITH_IPV6 */

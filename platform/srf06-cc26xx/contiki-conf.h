@@ -82,7 +82,11 @@
 #define WITH_FAST_SLEEP                         1
 
 #ifndef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
-#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE    8
+#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE    16
+#endif
+
+#ifndef QUEUEBUF_CONF_NUM
+#define QUEUEBUF_CONF_NUM 32
 #endif
 
 #ifndef NETSTACK_CONF_FRAMER
@@ -262,7 +266,7 @@
  * @{
  */
 #ifndef ENERGEST_CONF_ON
-#define ENERGEST_CONF_ON            0 /**< Energest Module */
+#define ENERGEST_CONF_ON            1 /**< Energest Module */
 #endif
 /** @} */
 /*---------------------------------------------------------------------------*/

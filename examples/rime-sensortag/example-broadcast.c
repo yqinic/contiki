@@ -48,8 +48,6 @@
 
 #include <stdio.h>
 
-int ch = 26;
-int p = 5;
 /*---------------------------------------------------------------------------*/
 PROCESS(example_broadcast_process, "Broadcast example");
 AUTOSTART_PROCESSES(&example_broadcast_process);
@@ -57,8 +55,8 @@ AUTOSTART_PROCESSES(&example_broadcast_process);
 static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
-  printf("broadcast message received from %d.%d: '%d'\n",
-         from->u8[0], from->u8[1], (short)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+  printf("broadcast message received from %d.%d: %hd\n",
+         from->u8[0], from->u8[1], packetbuf_attr(PACKETBUF_ATTR_RSSI));
 
   leds_toggle(LEDS_RED);
 }
@@ -75,37 +73,17 @@ PROCESS_THREAD(example_broadcast_process, ev, data)
 
   broadcast_open(&broadcast, 129, &broadcast_call);
 
-
-
+  // NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, 5);
+  
   while(1) {
 
-    ch -= 0.1;
-
-    if (p <= 0) {
-      if (p >= -21)
-        p -= 3;
-      else
-        p = 5;
-    }
-    else
-      p -= 1;
-
-    etimer_set(&et, CLOCK_SECOND);
+    etimer_set(&et, CLOCK_SECOND*0.5);
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     leds_toggle(LEDS_GREEN);
-    if (ch >= 11) {
-      NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, (int)ch);
-      NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, p);
-      printf("ch:%d ", ch);
-    }
-    else 
-      ch = 26;
+
     packetbuf_copyfrom("Hello", 6);
     broadcast_send(&broadcast);
-    int channel_num;
-    NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &channel_num);
-    printf("channel:%d\n", channel_num);
   }
 
   PROCESS_END();

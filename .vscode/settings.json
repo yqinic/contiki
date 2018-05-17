@@ -15,6 +15,10 @@
         "channel-scan.h": "c",
         "rtimer.h": "c",
         "energest.h": "c",
-        "type_traits": "c"
-    }
+        "type_traits": "c",
+        "stdlib.h": "c",
+        "string.h": "c",
+        "leds.h": "c"
+    },
+    "C_Cpp.dimInactiveRegions": true
 }

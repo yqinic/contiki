@@ -244,11 +244,11 @@ recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
 }
 
 static void
-sent_buc(struct bunicast_conn *c, int *status)
+sent_buc(struct bunicast_conn *c, int status)
 {
     const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-    PRINTF("bunicast message sent to %d.%d: status %s\n",
-        dest->u8[0], dest->u8[1], (char *)status);
+    PRINTF("bunicast message sent to %d.%d: status %d\n",
+        dest->u8[0], dest->u8[1], status);
 
     channel_hop(COMMAND_CHANNEL);
 }

@@ -1,7 +1,6 @@
 #include "net/rime/rime.h"
 #include "net/rime/bunicast.h"
 #include <string.h>
-#include <stdlib.h>
 
 #define DEBUG 0
 #if DEBUG
@@ -34,29 +33,40 @@ sent_by_unicast(struct unicast_conn *unicast, int status, int num_tx)
 {
 	struct bunicast_conn *c = (struct bunicast_conn *)unicast;
 
+#if DYNAMIC_MEMB
 	static int *s;
+#else
+	static int s = 0;
+#endif
 
 	if (c->counter == 0) {
+#if DYNAMIC_MEMB
 		free(s);
-		s = malloc(c->total_num_tx * sizeof(int));
+		s = malloc(c->total_num_tx*sizeof(int));
 	}
 	s[c->counter] = status;
+#else
+		s = 0;
+	}
+	s += status;
+#endif
 
-	PRINTF("status: %d\n", status);
+	PRINTF("status: %d, counter: %d, total_num_tx: %d\n", 
+		status, c->counter, c->total_num_tx);
 
 	if (++c->counter == c->total_num_tx) {
 		if (c->u->sent) {
 			c->u->sent(c, s);
 		}
 
-#if DEBUG
-		int ds;
-		for (ds = 0; ds < c->total_num_tx; ds++)
-			PRINTF("No. %d packet status: %d\n", ds + 1, s[ds]);
-#endif
+// #if DEBUG
+// 		int ds;
+// 		for (ds = 0; ds < c->total_num_tx; ds++)
+// 			PRINTF("No. %d packet status: %d\n", ds + 1, s[ds]);
+// #endif
 
-		c->counter = 0;
-		c->total_num_tx = 0;
+		// c->counter = 0;
+		// c->total_num_tx = 0;
 	}
 }
 
@@ -90,7 +100,8 @@ bunicast_send(struct bunicast_conn *c, const linkaddr_t *receiver, char *data)
 	if (data_len % FRAME_DATA_SIZE != 0) 
 		c->total_num_tx += 1;
 		
-	PRINTF("Total number of transmission: %d\n", c->total_num_tx);
+	PRINTF("Total number of transmission: %d, sent to %d.%d\n",
+		c->total_num_tx, receiver->u8[0], receiver->u8[1]);
 
 	char *data_ptr;
 
