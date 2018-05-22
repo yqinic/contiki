@@ -18,7 +18,9 @@
         "type_traits": "c",
         "stdlib.h": "c",
         "string.h": "c",
-        "leds.h": "c"
+        "leds.h": "c",
+        "button-sensor.h": "c",
+        "array": "c"
     },
     "C_Cpp.dimInactiveRegions": true
 }
