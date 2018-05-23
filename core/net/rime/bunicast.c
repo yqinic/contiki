@@ -33,23 +33,12 @@ sent_by_unicast(struct unicast_conn *unicast, int status, int num_tx)
 {
 	struct bunicast_conn *c = (struct bunicast_conn *)unicast;
 
-#if DYNAMIC_MEMB
-	static int *s;
-#else
 	static int s = 0;
-#endif
 
-	if (c->counter == 0) {
-#if DYNAMIC_MEMB
-		free(s);
-		s = malloc(c->total_num_tx*sizeof(int));
-	}
-	s[c->counter] = status;
-#else
+	if (c->counter == 0)
 		s = 0;
-	}
+
 	s += status;
-#endif
 
 	PRINTF("status: %d, counter: %d, total_num_tx: %d\n", 
 		status, c->counter, c->total_num_tx);

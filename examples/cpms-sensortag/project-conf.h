@@ -1,4 +1,4 @@
-// #define CHANNEL_OFFSET 5
+#define CHANNEL_OFFSET 26
 
 #define FRAME_DATA_SIZE 80
 

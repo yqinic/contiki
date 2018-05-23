@@ -1,6 +1,7 @@
 #include "net/cpms-ack.h"
-#include "dev/battery-sensor.h"
-#include <stdlib.h>
+#include "lib/sensors.h"
+#include "dev/batmon-sensor.h"
+#include "contiki.h"
 
 #define DEBUG 0
 #if DEBUG
@@ -28,9 +29,9 @@ cpmsack_update(int num)
     cpms_acks[CPMSACK_DATA_PRIORITY] = 2;
     cpms_acks[CPMSACK_DATA_BYTES] = num;
 
-    SENSORS_ACTIVATE(battery_sensor);
-    cpms_acks[CPMSACK_BATTERY_VOLTAGE] = battery_sensor.value(0);
-    SENSORS_DEACTIVATE(battery_sensor);
+    SENSORS_ACTIVATE(batmon_sensor);
+    cpms_acks[CPMSACK_BATTERY_VOLTAGE] = batmon_sensor.value(BATMON_SENSOR_TYPE_VOLT);
+    SENSORS_DEACTIVATE(batmon_sensor);
 
     return 1;
 }
@@ -98,11 +99,9 @@ cpmsack_frame_create(int num, uint8_t *buf)
     return (int)pos;
 }
 
-void *
-cpmsack_frame_parse(uint8_t *buf)
+void 
+cpmsack_frame_parse(uint8_t *buf, struct cpmsack_list *cpmsacklist)
 {
-    struct cpmsack_list *cpmsacklist;
-    cpmsacklist = malloc(1);
 
     cpmsacklist->priority = buf[0] & 63;
     cpmsacklist->bytes = (buf[1] << 8) + buf[2];
@@ -116,5 +115,5 @@ cpmsack_frame_parse(uint8_t *buf)
         cpmsacklist->bytes, cpmsacklist->voltage, cpmsacklist->volumn,
         cpmsacklist->type, cpmsacklist->orientation, cpmsacklist->camera);
 
-    return cpmsacklist;
+    return;
 }

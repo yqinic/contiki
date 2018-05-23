@@ -9,7 +9,7 @@ struct cpmspriority_list {
     int rssi;
     uint8_t re_tx;
     linkaddr_t addr;
-    struct cpmsack_list *cpmsacklist;
+    struct cpmsack_list cpmsacklist;
 };
 
 int cpmsplist_create(int rssi, const linkaddr_t *addr, struct cpmsack_list *cpmsacklist);

@@ -25,6 +25,6 @@ struct cpmsrequest_list{
 
 int cpmsrequest_frame_create(int channel, int order, int bytes, uint8_t *buf);
 
-void * cpmsrequest_frame_parse(uint8_t *buf);
+void cpmsrequest_frame_parse(uint8_t *buf, struct cpmsrequest_list *cpmsrequestlist);
 
 #endif

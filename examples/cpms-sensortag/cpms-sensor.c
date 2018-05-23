@@ -28,8 +28,6 @@ recv_bc(struct broadcast_conn *c, const linkaddr_t *from)
 	    from->u8[0], from->u8[1]);
 
     // acknowledgment frame
-    // uint8_t *buf;
-    // buf = malloc(CPMSACK_FRAME_LENGTH);
 
     uint8_t buf[CPMSACK_FRAME_LENGTH];
     int num = 32;
@@ -59,11 +57,11 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
     // data request frame received
     // bunicast data to sink
 
-    struct cpmsrequest_list *cpmsrequestlist = 
-        cpmsrequest_frame_parse((uint8_t *)packetbuf_dataptr());
+    struct cpmsrequest_list cpmsrequestlist;
+    cpmsrequest_frame_parse((uint8_t *)packetbuf_dataptr(), &cpmsrequestlist);
 
-    if (channel_hop(cpmsrequestlist->channel)) {
-        PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist->channel);
+    if (channel_hop(cpmsrequestlist.channel)) {
+        PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist.channel);
 
         char *buf = "hello world\n";
         bunicast_send(&buc, from, buf);
@@ -92,11 +90,11 @@ recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
 }
 
 static void
-sent_buc(struct bunicast_conn *c, int *status)
+sent_buc(struct bunicast_conn *c, int status)
 {
     const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-    PRINTF("bunicast message sent to %d.%d: status %s\n",
-        dest->u8[0], dest->u8[1], (char *)status);
+    PRINTF("bunicast message sent to %d.%d: status %d\n",
+        dest->u8[0], dest->u8[1], status);
 
     channel_hop(COMMAND_CHANNEL);
 }
@@ -124,17 +122,6 @@ PROCESS_THREAD(sensor_process, ev, data)
         etimer_set(&et, CLOCK_SECOND * 40);
 
         // sensor applications to be put here 
-        // uint8_t *buf;
-        // buf = malloc(CPMSACK_FRAME_LENGTH);
-        // int num = 32;
-        // cpmsack_frame_create(num, buf);
-
-        // linkaddr_t addr;
-        // addr.u8[0] = 155;
-        // addr.u8[1] = 150;
-
-        // packetbuf_copyfrom(buf, CPMSACK_FRAME_LENGTH);
-        // unicast_send(&uc, &addr);
 
         PROCESS_WAIT_UNTIL(etimer_expired(&et));
     }

@@ -1,6 +1,5 @@
 #include "net/rime/priority-list.h"
 #include "lib/memb.h"
-#include <stdlib.h>
 
 #define DEBUG 1
 #if DEBUG
@@ -29,7 +28,8 @@ cpmsplist_print()
     while (list_handle != NULL) {
         count += 1;
         printf("no. %d element in plist, priority: %d, rssi: %d, no. of retx: %d, address: %d.%d\n", 
-            count, list_handle->cpmsacklist->priority, list_handle->rssi, list_handle->re_tx,
+            // count, list_handle->cpmsacklist->priority, list_handle->rssi, list_handle->re_tx,
+            count, list_handle->cpmsacklist.priority, list_handle->rssi, list_handle->re_tx,
             list_handle->addr.u8[0], list_handle->addr.u8[1]);
 
         list_handle = list_item_next(list_handle);
@@ -58,7 +58,8 @@ update_cpmsplist(struct cpmspriority_list *cpmsplist)
             return 0;
         }
         if (cpmsplist->re_tx == 1) {
-            if (list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) {
+            // if (list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) {
+            if (list_handle->cpmsacklist.priority > cpmsplist->cpmsacklist.priority) {
                     
                 list_push(plist, cpmsplist);
                 PRINTF("retx push to the beginning\n");
@@ -71,8 +72,10 @@ update_cpmsplist(struct cpmspriority_list *cpmsplist)
 
                 while (list_handle != NULL) {
 
-                    if (list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) {
-                    
+                    // if (list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) {
+                    if (list_handle->cpmsacklist.priority > cpmsplist->cpmsacklist.priority) {
+
+
                         list_insert(plist, list_previous, cpmsplist);
                         PRINTF("retx element inserted to a specific place\n");
                         PRINTFUNC();
@@ -90,8 +93,11 @@ update_cpmsplist(struct cpmspriority_list *cpmsplist)
             }
         } else {
             // have list, but current struct has highest priority, or priority corresponded highest rssi
-            if ((list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) ||
-                ((list_handle->cpmsacklist->priority == cpmsplist->cpmsacklist->priority) && 
+            // if ((list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) ||
+            //     ((list_handle->cpmsacklist->priority == cpmsplist->cpmsacklist->priority) && 
+            //     (list_handle->rssi <= cpmsplist->rssi))) {
+            if ((list_handle->cpmsacklist.priority > cpmsplist->cpmsacklist.priority) ||
+                ((list_handle->cpmsacklist.priority == cpmsplist->cpmsacklist.priority) && 
                 (list_handle->rssi <= cpmsplist->rssi))) {
 
                 list_push(plist, cpmsplist);
@@ -104,14 +110,16 @@ update_cpmsplist(struct cpmspriority_list *cpmsplist)
 
                 while (list_handle != NULL) {
                     
-                    if (list_handle->cpmsacklist->priority == cpmsplist->cpmsacklist->priority) {
+                    // if (list_handle->cpmsacklist->priority == cpmsplist->cpmsacklist->priority) {
+                    if (list_handle->cpmsacklist.priority == cpmsplist->cpmsacklist.priority) {
                         if (list_handle->rssi <= cpmsplist->rssi) {
                             list_insert(plist, list_previous, cpmsplist);
                             PRINTF("element inserted to a specific place\n");
                             PRINTFUNC();
                             return 1;
                         }
-                    } else if (list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) {
+                    // } else if (list_handle->cpmsacklist->priority > cpmsplist->cpmsacklist->priority) {
+                    } else if (list_handle->cpmsacklist.priority > cpmsplist->cpmsacklist.priority) {                        
                         list_insert(plist, list_previous, cpmsplist);
                         PRINTF("element inserted to a specific place\n");
                         PRINTFUNC();
@@ -160,7 +168,8 @@ cpmsplist_create(int rssi, const linkaddr_t *addr, struct cpmsack_list *cpmsackl
         cpmsplist->rssi = rssi;
         cpmsplist->re_tx = 0;
         linkaddr_copy(&cpmsplist->addr, addr);
-        cpmsplist->cpmsacklist = cpmsacklist;
+        // cpmsplist->cpmsacklist = cpmsacklist;
+        memcpy(&(cpmsplist->cpmsacklist), cpmsacklist, sizeof(*cpmsacklist));
 
         PRINTF("plist struct created, rssi: %d, addr: %d.%d\n", cpmsplist->rssi, 
         cpmsplist->addr.u8[0], cpmsplist->addr.u8[1]);
@@ -181,7 +190,8 @@ int
 cpmsplist_retx_update(struct cpmspriority_list *cpmsplist)
 {
     if (++cpmsplist->re_tx == 2) {
-        if (++cpmsplist->cpmsacklist->priority > CPMS_PRIORITY_LEVEL_MAX) {
+        // if (++cpmsplist->cpmsacklist->priority > CPMS_PRIORITY_LEVEL_MAX) {
+        if (++cpmsplist->cpmsacklist.priority > CPMS_PRIORITY_LEVEL_MAX) {
             return 0;
         }
     } else if (cpmsplist->re_tx == 3) {
@@ -191,7 +201,8 @@ cpmsplist_retx_update(struct cpmspriority_list *cpmsplist)
     }
 
     PRINTF("updated priority: %d, updated re_tx: %d\n", 
-        cpmsplist->cpmsacklist->priority, cpmsplist->re_tx);
+        // cpmsplist->cpmsacklist->priority, cpmsplist->re_tx);
+        cpmsplist->cpmsacklist.priority, cpmsplist->re_tx);
 
     return update_cpmsplist(cpmsplist);
 }
@@ -202,7 +213,7 @@ cpmsplist_free()
     // free the list and its corresponding memory
     while (list_head(plist) != NULL) {
         struct cpmspriority_list *cpmsplist = list_chop(plist);
-        free(cpmsplist->cpmsacklist);
+        // free(cpmsplist->cpmsacklist);
         memb_free(&plist_memb, cpmsplist);
     }
     

@@ -1,5 +1,4 @@
 #include "net/cpms-request.h"
-#include <stdlib.h>
 
 #define DEBUG 0
 #if DEBUG
@@ -19,7 +18,7 @@
 #define PRINTF(...)
 #endif
 
-static int cpms_request[CPMSREQUEST_NUM];
+// static int cpms_request[CPMSREQUEST_NUM];
 
 int 
 cpmsrequest_frame_create(int channel, int order, int bytes, uint8_t *buf)
@@ -41,12 +40,9 @@ cpmsrequest_frame_create(int channel, int order, int bytes, uint8_t *buf)
     return (int)pos;
 }
 
-void * 
-cpmsrequest_frame_parse(uint8_t *buf)
+void 
+cpmsrequest_frame_parse(uint8_t *buf, struct cpmsrequest_list *cpmsrequestlist)
 {
-    struct cpmsrequest_list *cpmsrequestlist;
-    cpmsrequestlist = malloc(1);
-
     cpmsrequestlist->channel = (buf[0] >> 2) & 15;
     cpmsrequestlist->channel += CHANNEL_LOWEST;
     cpmsrequestlist->order = buf[0] & 3;
@@ -55,5 +51,5 @@ cpmsrequest_frame_parse(uint8_t *buf)
     PRINTF("%d\n%d\n%d\n", cpmsrequestlist->channel,
         cpmsrequestlist->order, cpmsrequestlist->bytes);
 
-    return cpmsrequestlist;
+    return;
 }

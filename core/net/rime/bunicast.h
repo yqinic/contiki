@@ -1,22 +1,15 @@
 #ifndef BUNICAST_H_
 #define BUNICAST_H_
 
-#define DYNAMIC_MEMB 0
 
 #include "net/rime/unicast.h"
-#if DYNAMIC_MEMB
-#include <stdlib.h>
-#endif
 
 struct bunicast_conn;
 
 struct bunicast_callbacks {
 	void (* recv)(struct bunicast_conn *c, const linkaddr_t *from);
-#if DYNAMIC_MEMB
-	void (* sent)(struct bunicast_conn *ptr, int status[]);
-#else
+
 	void (* sent)(struct bunicast_conn *ptr, int status);
-#endif
 };
 
 struct bunicast_conn {

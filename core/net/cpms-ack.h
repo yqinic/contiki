@@ -65,6 +65,6 @@ int cpmsack_get_attr(int type);
 
 int cpmsack_frame_create(int num, uint8_t *buf);
 
-void * cpmsack_frame_parse(uint8_t *buf);
+void cpmsack_frame_parse(uint8_t *buf, struct cpmsack_list *cpmsacklist);
 
 #endif
