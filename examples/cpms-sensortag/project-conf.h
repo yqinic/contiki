@@ -4,12 +4,12 @@
 
 #define BLOCK_SIZE_OFFSET 8
 
-// #define NETSTACK_CONF_RDC     nullrdc_driver
+#define NETSTACK_CONF_RDC     nullrdc_driver
 
-#define NETSTACK_CONF_RDC     contikimac_driver
+// #define NETSTACK_CONF_RDC     contikimac_driver
 
 #define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE 16
 
 // #define WITH_PHASE_OPTIMIZATION 1
 
-#define CSMA_CONF_MAX_FRAME_RETRIES 3
+// #define CSMA_CONF_MAX_FRAME_RETRIES 3
