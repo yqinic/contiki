@@ -16,8 +16,6 @@
 #define PRINTF(...)
 #endif
 
-int count;
-
 /*---------------------------------------------------------------------------*/
 PROCESS(antenna_test, "Antenna Test");
 AUTOSTART_PROCESSES(&antenna_test);
@@ -38,7 +36,8 @@ broadcast_sent(struct broadcast_conn *c, int status, int num_tx)
 static void
 unicast_recv(struct unicast_conn *c, const linkaddr_t *from)
 {
-    printf("%s\n", (char *)packetbuf_dataptr());
+    printf("%s, data len: %d, hdr len: %d\n", (char *)packetbuf_dataptr(),
+        packetbuf_datalen(), packetbuf_hdrlen());
 }
 
 static void
@@ -61,21 +60,21 @@ PROCESS_THREAD(antenna_test, ev, data)
 
     broadcast_open(&broadcast, 129, &broadcast_call);
     unicast_open(&unicast, 137, &unicast_call);
-    NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, 0);
 
-    static struct etimer et;
+    // static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND * 0.5);
-        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+        // etimer_set(&et, CLOCK_SECOND * 60);
+        // PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
         // linkaddr_t addr;
         // addr.u8[0] = 99;
         // addr.u8[1] = 100;
 
-        packetbuf_copyfrom("antennabc", 9);
-        broadcast_send(&broadcast);
+        // packetbuf_copyfrom("antennabc", 9);
+        // broadcast_send(&broadcast);
         // unicast_send(&unicast,&addr);
+        PROCESS_YIELD();
     }
 
     PROCESS_END();

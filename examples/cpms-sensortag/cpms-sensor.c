@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #define PRINTF(...) printf(__VA_ARGS__)
 #else
 #define PRINTF(...)
 #endif
+
+#define DEBUG_RELIABLE 1
 
 #define COMMAND_CHANNEL CHANNEL_OFFSET
 
@@ -19,6 +21,11 @@ AUTOSTART_PROCESSES(&sensor_process);
 static struct broadcast_conn bc;
 static struct unicast_conn uc;
 static struct bunicast_conn buc;
+
+static linkaddr_t addr;
+
+#define DATA_SIZE 96
+char buf[DATA_SIZE];
 
 // broadcast communication
 static void
@@ -53,19 +60,25 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
 
     PRINTF("unicast message received from %d.%d\n", from->u8[0], from->u8[1]);
+    linkaddr_copy(&addr, from);
 
     // data request frame received
     // bunicast data to sink
 
     struct cpmsrequest_list cpmsrequestlist;
     cpmsrequest_frame_parse((uint8_t *)packetbuf_dataptr(), &cpmsrequestlist);
+    PRINTF("prepare hopping to channel: %d\n", cpmsrequestlist.channel);
 
-    if (channel_hop(cpmsrequestlist.channel)) {
+    if (channel_hop(cpmsrequestlist.channel) == CHANNEL_HOP_OK) {
         PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist.channel);
 
-        char *buf = "hello world\n";
+        // char *buf = "hello world\n";
+        bunicast_size(&buc, 16);
         bunicast_send(&buc, from, buf);
-    }
+
+        // cannot channel hop here
+    } else
+        PRINTF("failed to hop to channel %d\n", cpmsrequestlist.channel);
 }
 
 static void
@@ -92,11 +105,25 @@ recv_buc(struct bunicast_conn *c, const linkaddr_t *from)
 static void
 sent_buc(struct bunicast_conn *c, int status)
 {
-    const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-    PRINTF("bunicast message sent to %d.%d: status %d\n",
-        dest->u8[0], dest->u8[1], status);
 
+    // const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+    PRINTF("bunicast message sent to %d.%d: status %d\n",
+        addr.u8[0], addr.u8[1], status);
+
+#if DEBUG_RELIABLE
+    static int burst_sent_count = 0;
+
+    burst_sent_count += 1;
+
+    if (burst_sent_count == 72) {
+        channel_hop(COMMAND_CHANNEL);
+        burst_sent_count = 0;
+    }
+    else 
+        bunicast_send(c, &addr, buf);
+#else
     channel_hop(COMMAND_CHANNEL);
+#endif
 }
 
 static const struct bunicast_callbacks bunicast_callbacks = {recv_buc, sent_buc};
@@ -117,6 +144,11 @@ PROCESS_THREAD(sensor_process, ev, data)
     com_init();
 
     static struct etimer et;
+
+    int i;
+    for (i = 0; i < DATA_SIZE; i++) {
+        buf[i] = 'a';
+    }
 
     while(1) {
         etimer_set(&et, CLOCK_SECOND * 40);

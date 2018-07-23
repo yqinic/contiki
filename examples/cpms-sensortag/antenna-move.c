@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#define NUM_PACKETS_SEND 20
+#define NUM_PACKETS_SEND 50
 
 #define DEBUG 0
 #if DEBUG
@@ -71,7 +71,7 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
     if (antenna_send_set(0) == 1) {
         if (count > 0) {
             char buf[20];
-            sprintf(buf, "%hd,%d\0", 
+            sprintf(buf, "%hd,%d", 
                 packetbuf_attr(PACKETBUF_ATTR_RSSI), count);
             packetbuf_copyfrom(buf, strlen(buf));
             count -= 1;
