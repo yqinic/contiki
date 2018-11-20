@@ -1,57 +1,19 @@
 #include "contiki.h"
 #include "net/rime/rime.h"
 #include "sys/ctimer.h"
+#include "sink.h"
 #include <stdio.h>
-
-#define DEBUG 0
-#if DEBUG
-#define PRINTF(...) printf(__VA_ARGS__)
-#else
-#define PRINTF(...)
-#endif
-
-#define DEBUG_TIMER 0
-#define DEBUG_RELIABLE 1
-
-#define CHANNEL_HOPPING 1
-
-// expire time in clock ticks 
-#define CPMS_ACK_EXPIRE 16
-#define CPMS_REQUEST_EXPIRE 8
-#define CPMS_GLOREQ_EXPIRE 128
-#define CPMS_DATA_EXPIRE 16
-#define CPMS_GLODATA_EXPIRE 256
-
-#define MAX_ACK_NUM 9
-
-#define COMMAND_CHANNEL CHANNEL_OFFSET
-
-#define EVENT_BC_STOP 0xA0
-
-enum {
-    // request timer 
-    REQ_TIMER,
-
-    // global request timer
-    GLOBALREQ_TIMER,
-
-    // data timer
-    DATA_TIMER,
-
-    // global data timer
-    GLOBALDATA_TIMER,
-
-    TIMER_NUM
-};
 
 PROCESS(sink_process, "Sink Process");
 PROCESS(broadcast_process, "Broadcast Process");
 AUTOSTART_PROCESSES(&sink_process);
 
+// communication variables
 static struct broadcast_conn bc;
 static struct unicast_conn uc;
 static struct bunicast_conn buc;
 
+// expire timers
 static struct ctimer expire_timer[TIMER_NUM];
 
 struct cpmspriority_list *global_cpmsplist;
@@ -110,15 +72,12 @@ unicast_request()
     // cpmsrequest_frame_create(data_channel, 0, cpmsplist->cpmsacklist->bytes, buf);
     cpmsrequest_frame_create(data_channel, 0, cpmsplist->cpmsacklist.bytes, buf);
 
-
     PRINTF("cpms-sink: data channel: %d, send to %d.%d\n", 
         data_channel, cpmsplist->addr.u8[0], cpmsplist->addr.u8[1]);
 
     // send data request frame on command channel
     packetbuf_copyfrom(buf, CPMSREQUEST_FRAME_LENGTH);
     unicast_send(&uc, &cpmsplist->addr);
-
-    // free(buf);
 
     // // set expire time
     // ctimer_set(&request_timer, CPMS_REQUEST_EXPIRE, request_expire, cpmsplist);
@@ -175,7 +134,7 @@ unicast_request_from_ack()
     PRINTF("cpms-sink: unicast ack received time expires, data request begins\n");
 
     // channel scan to obtain optimal data channel
-#if CHANNEL_HOPPING
+#if CHANNEL_SWITCHING
     // data_channel = channel_scan();
     data_channel = 14;
 #else

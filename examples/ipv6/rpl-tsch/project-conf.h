@@ -145,7 +145,7 @@
 /************* Other system configuration **************/
 /*******************************************************/
 
-#if CONTIKI_TARGET_Z1
+// #if CONTIKI_TARGET_Z1
 /* Save some space to fit the limited RAM of the z1 */
 #undef UIP_CONF_TCP
 #define UIP_CONF_TCP 0
@@ -173,7 +173,7 @@
 #define TSCH_LOG_CONF_LEVEL 0
 #endif /* WITH_SECURITY */
 
-#endif /* CONTIKI_TARGET_Z1 */
+// #endif /* CONTIKI_TARGET_Z1 */
 
 #if CONTIKI_TARGET_CC2538DK || CONTIKI_TARGET_ZOUL || \
   CONTIKI_TARGET_OPENMOTE_CC2538

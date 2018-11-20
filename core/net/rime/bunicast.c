@@ -15,7 +15,7 @@
 #endif
 
 #ifndef FRAME_DATA_SIZE
-#define FRAME_DATA_SIZE 80
+#define FRAME_DATA_SIZE 96
 #endif
 
 static void 

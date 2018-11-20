@@ -108,6 +108,8 @@ input(void)
 
   RIMESTATS_ADD(rx);
   c = chameleon_parse();
+
+  PRINTF("nullrdc packets reached rime\n");
   
   for(s = list_head(sniffers); s != NULL; s = list_item_next(s)) {
     if(s->input_callback != NULL) {

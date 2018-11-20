@@ -745,6 +745,7 @@ soft_off(void)
   volatile rfc_radioOp_t *cmd = rf_core_get_last_radio_op();
 
   if(!rf_core_is_accessible()) {
+    PRINTF("rf-core not accessible\n");
     return;
   }
 

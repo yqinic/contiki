@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#define NUM_PACKETS_SEND 50
+#define NUM_PACKETS_SEND 100
 
 #define DEBUG 0
 #if DEBUG

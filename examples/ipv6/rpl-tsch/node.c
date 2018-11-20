@@ -169,11 +169,11 @@ PROCESS_THREAD(node_process, ev, data)
    * - role_6dr: DAG root, will advertise (unsecured) beacons
    * - role_6dr_sec: DAG root, will advertise secured beacons
    * */
-  static int is_coordinator = 0;
+  static int is_coordinator = 1;
   static enum { role_6ln, role_6dr, role_6dr_sec } node_role;
   node_role = role_6ln;
 
-  int coordinator_candidate = 0;
+  int coordinator_candidate = 1;
 
 #ifdef CONTIKI_TARGET_Z1
   /* Set node with MAC address c1:0c:00:00:00:00:01 as coordinator,

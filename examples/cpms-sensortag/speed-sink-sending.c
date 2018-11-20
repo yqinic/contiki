@@ -84,8 +84,8 @@ PROCESS_THREAD(antenna_test, ev, data)
 
     // static struct etimer et;
 
-    addr.u8[0] = 179;
-    addr.u8[1] = 131;
+    addr.u8[0] = 163;
+    addr.u8[1] = 129;
 
     while(1) {
         // etimer_set(&et, CLOCK_SECOND);

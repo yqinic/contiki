@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -16,7 +16,10 @@
 #define PRINTF(...)
 #endif
 
-int count;
+static int count = 0;
+static int err = 0;
+static linkaddr_t addr;
+static unsigned long time_stat = 0;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(antenna_test, "Antenna Test");
@@ -38,13 +41,23 @@ broadcast_sent(struct broadcast_conn *c, int status, int num_tx)
 static void
 unicast_recv(struct unicast_conn *c, const linkaddr_t *from)
 {
-    printf("%s\n", (char *)packetbuf_dataptr());
+    PRINTF("%s\n", (char *)packetbuf_dataptr());
 }
 
 static void
 unicast_sent(struct unicast_conn *c, int status, int num_tx)
 {
-    PRINTF("status: %d\n", status);
+    if (status == 0) {
+        printf("time: %lu, err: %d, ct: %d\n", rtimer_arch_now() - time_stat,
+            err, count);
+    } else {
+        err += 1;
+    }
+    count += 1;
+
+    packetbuf_copyfrom("thisisa40bytemessagefortestingpurpose!!!", 40);
+    unicast_send(c, &addr);
+    time_stat = rtimer_arch_now();
 }
 
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv, broadcast_sent};
@@ -52,6 +65,7 @@ static struct broadcast_conn broadcast;
 
 static const struct unicast_callbacks unicast_call = {unicast_recv, unicast_sent};
 static struct unicast_conn unicast;
+
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(antenna_test, ev, data)
 {
@@ -61,21 +75,22 @@ PROCESS_THREAD(antenna_test, ev, data)
 
     broadcast_open(&broadcast, 129, &broadcast_call);
     unicast_open(&unicast, 137, &unicast_call);
-    NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, 0);
 
-    static struct etimer et;
+    // static struct etimer et;
+
+    addr.u8[0] = 163;
+    addr.u8[1] = 129;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND * 0.2);
-        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+        // etimer_set(&et, CLOCK_SECOND);
+        // PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+    
+        packetbuf_copyfrom("thisisa40bytemessagefortestingpurpose!!!", 40);
+        unicast_send(&unicast, &addr);
+        count += 1;
+        time_stat = rtimer_arch_now();
 
-        // linkaddr_t addr;
-        // addr.u8[0] = 99;
-        // addr.u8[1] = 100;
-
-        packetbuf_copyfrom("antennabc", 9);
-        broadcast_send(&broadcast);
-        // unicast_send(&unicast,&addr);
+        PROCESS_YIELD();
     }
 
     PROCESS_END();

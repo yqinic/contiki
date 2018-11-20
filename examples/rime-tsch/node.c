@@ -44,8 +44,9 @@
 #include "net/rime/rime.h"
 #include "net/mac/tsch/tsch.h"
 
-const linkaddr_t coordinator_addr =    { { 1, 0 } };
-const linkaddr_t destination_addr =    { { 1, 0 } };
+const linkaddr_t coordinator_addr =    { { 163, 129 } };
+const linkaddr_t destination_addr =    { { 163, 129 } };
+// const linkaddr_t destination_addr =    { { 179, 131 } };
 
 /*---------------------------------------------------------------------------*/
 PROCESS(unicast_test_process, "Rime Node");
@@ -88,10 +89,10 @@ PROCESS_THREAD(unicast_test_process, ev, data)
 
     packetbuf_copyfrom("Hello", 5);
 
-    if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
-      printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
-      unicast_send(&uc, &destination_addr);
-    }
+    // if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
+    //   printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
+    //   unicast_send(&uc, &destination_addr);
+    // }
   }
 
   PROCESS_END();

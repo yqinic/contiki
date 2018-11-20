@@ -68,6 +68,8 @@
 #endif /* TSCH_LOG_LEVEL */
 #include "net/net-debug.h"
 
+#define JOIN_TIME_ESTIMATE 1
+
 /* Use to collect link statistics even on Keep-Alive, even though they were
  * not sent from an upper layer and don't have a valid packet_sent callback */
 #ifndef TSCH_LINK_NEIGHBOR_CALLBACK
@@ -144,6 +146,10 @@ static clock_time_t tsch_current_ka_timeout;
 
 /* timer for sending keepalive messages */
 static struct ctimer keepalive_timer;
+
+#if JOIN_TIME_ESTIMATE
+static unsigned long join_time_arch = 0;
+#endif
 
 /* TSCH processes and protothreads */
 PT_THREAD(tsch_scan(struct pt *pt));
@@ -662,6 +668,12 @@ PT_THREAD(tsch_scan(struct pt *pt))
     if(tsch_is_associated) {
       /* End of association, turn the radio off */
       NETSTACK_RADIO.off();
+
+#if JOIN_TIME_ESTIMATE
+    join_time_arch = rtimer_arch_now() - join_time_arch;
+    PRINTF("TSCH: join time estimate: %lu arch seconds\n", join_time_arch);
+#endif
+
     } else if(!tsch_is_coordinator) {
       /* Go back to scanning */
       etimer_reset(&scan_timer);
@@ -801,6 +813,10 @@ tsch_init(void)
   radio_value_t radio_rx_mode;
   radio_value_t radio_tx_mode;
   rtimer_clock_t t;
+
+#if JOIN_TIME_ESTIMATE
+  join_time_arch = rtimer_arch_now();
+#endif
 
   /* Radio Rx mode */
   if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
