@@ -7,6 +7,12 @@
 
 /*------------------UIWP Protocol Related Configuration -----------------------------*/
 
+// Applications
+#define UIWP_APPLICATION WIRELESS_CHARGING
+
+// Broadcast interval
+#define UWIP_BROADCAST_INTERVAL 5
+
 // Expire timers in clock ticks
 #define CPMS_ACK_EXPIRE 16
 #define CPMS_REQUEST_EXPIRE 8
@@ -43,8 +49,12 @@ enum {
 
 // Applications
 enum {
+    // check node presence
+    CHECK_PRESENCE,
     // data collection
     DATA_COLLECTION,
+    // inspection
+    INSPECTION,
     // wireless charging
     WIRELESS_CHARGING,
 

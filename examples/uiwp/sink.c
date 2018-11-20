@@ -386,9 +386,29 @@ PROCESS_THREAD(broadcast_process, ev, data)
     static struct etimer et;
 
     while(1) {
-        etimer_set(&et, CLOCK_SECOND * 5);
+        etimer_set(&et, CLOCK_SECOND * UWIP_BROADCAST_INTERVAL);
 
-        packetbuf_copyfrom("cpms-sink: data acquire", 12);
+        int app = UIWP_APPLICATION;
+        char broadcast_frame[2];
+
+        switch (app) {
+            case 0:
+                broadcast_frame[0] = 0b00000000;
+                break;
+            case 1:
+                broadcast_frame[0] = 0b00000100;
+                break;
+            case 2:
+                broadcast_frame[0] = 0b00001000;
+                break;
+            case 3:
+                broadcast_frame[0] = 0b00001100;
+                break;
+            default:
+                break;
+        }
+        broadcast_frame[1] = 0b00000000;
+        packetbuf_copyfrom(broadcast_frame, 2);
         broadcast_send(&bc);
 
 #if DEBUG_RELIABLE

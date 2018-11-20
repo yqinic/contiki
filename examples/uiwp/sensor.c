@@ -35,7 +35,8 @@ recv_bc(struct broadcast_conn *c, const linkaddr_t *from)
     PRINTF("broadcast message received from %d.%d: %s\n",
 	    from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
 
-
+    char *broadcast_frame = (char *)packetbuf_dataptr();
+    int app = (int)((broadcast_frame[0] & 0b00111100) >> 2);
 
     // acknowledgment frame
 
