@@ -89,8 +89,8 @@ request_expire(void *ptr)
 {
     PRINTF("cpms-sink: data request expire, resend from priority list\n");
 
-    // hop back to command channel
-    channel_hop(COMMAND_CHANNEL);
+    // switch back to command channel
+    channel_switch(COMMAND_CHANNEL);
 
     struct cpmspriority_list *cpmsplist = ptr;
 
@@ -109,7 +109,7 @@ global_request_expire()
 {
     PRINTF("cpms-sink: global data request expires, back to broadcast\n");
 
-    channel_hop(COMMAND_CHANNEL);
+    channel_switch(COMMAND_CHANNEL);
 
 #if DEBUG_RELIABLE
     fail += 1;
@@ -237,8 +237,8 @@ sent_uc(struct unicast_conn *c, int status, int num_tx)
         dest->u8[0], dest->u8[1], status, num_tx);
 
     if (unicast_ack_collecting == 2) {
-        // channel hop
-        channel_hop(data_channel);
+        // channel switch
+        channel_switch(data_channel);
 
         // set expire time
         ctimer_set(&expire_timer[REQ_TIMER], CPMS_REQUEST_EXPIRE, request_expire, global_cpmsplist);
@@ -257,7 +257,7 @@ global_data_expire() {
 
     bunicast_data_receiving = 0;
 
-    channel_hop(COMMAND_CHANNEL);
+    channel_switch(COMMAND_CHANNEL);
 
 #if DEBUG_RELIABLE 
     fail += 1;
@@ -350,7 +350,7 @@ PROCESS_THREAD(sink_process, ev, data)
 
     com_init();
 
-    channel_hop(COMMAND_CHANNEL);
+    channel_switch(COMMAND_CHANNEL);
 
     while(1) {
 

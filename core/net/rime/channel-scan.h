@@ -4,8 +4,8 @@
 #include "contiki.h"
 
 enum {
-    CHANNEL_HOP_OK,
-    CHANNEL_HOP_ERROR
+    CHANNEL_SWITCH_OK,
+    CHANNEL_SWITCH_ERROR
 };
 
 enum {
@@ -15,6 +15,6 @@ enum {
 
 int channel_scan(void);
 
-int channel_hop(int channel); 
+int channel_switch(int channel); 
 
 #endif

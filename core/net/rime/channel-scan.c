@@ -82,7 +82,7 @@ channel_scan(void)
 }
 
 int
-channel_hop(int channel)
+channel_switch(int channel)
 {
 	if (NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, channel) != RADIO_RESULT_OK)
 		return CHANNEL_HOP_ERROR;

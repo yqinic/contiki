@@ -73,18 +73,18 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 
     struct cpmsrequest_list cpmsrequestlist;
     cpmsrequest_frame_parse((uint8_t *)packetbuf_dataptr(), &cpmsrequestlist);
-    PRINTF("prepare hopping to channel: %d\n", cpmsrequestlist.channel);
+    PRINTF("prepare switching to channel: %d\n", cpmsrequestlist.channel);
 
-    if (channel_hop(cpmsrequestlist.channel) == CHANNEL_HOP_OK) {
+    if (channel_switch(cpmsrequestlist.channel) == CHANNEL_SWITCH_OK) {
         PRINTF("bunicast send to sink, channel: %d\n", cpmsrequestlist.channel);
 
         // char *buf = "hello world\n";
         bunicast_size(&buc, 16);
         bunicast_send(&buc, from, buf);
 
-        // cannot channel hop here
+        // cannot channel switch here
     } else
-        PRINTF("failed to hop to channel %d\n", cpmsrequestlist.channel);
+        PRINTF("failed to switch to channel %d\n", cpmsrequestlist.channel);
 }
 
 static void
@@ -122,13 +122,13 @@ sent_buc(struct bunicast_conn *c, int status)
     burst_sent_count += 1;
 
     if (burst_sent_count == 72) {
-        channel_hop(COMMAND_CHANNEL);
+        channel_switch(COMMAND_CHANNEL);
         burst_sent_count = 0;
     }
     else 
         bunicast_send(c, &addr, buf);
 #else
-    channel_hop(COMMAND_CHANNEL);
+    channel_switch(COMMAND_CHANNEL);
 #endif
 }
 
@@ -140,7 +140,7 @@ com_init()
     broadcast_open(&bc, 127, &broadcast_callbacks);
     unicast_open(&uc, 146, &unicast_callbacks);
     bunicast_open(&buc, 135, &bunicast_callbacks);
-    channel_hop(COMMAND_CHANNEL);
+    channel_switch(COMMAND_CHANNEL);
 }
 
 PROCESS_THREAD(sensor_process, ev, data)
